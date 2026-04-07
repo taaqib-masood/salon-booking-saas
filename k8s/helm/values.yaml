@@ -1,0 +1,50 @@
+replicaCount: 3
+
+image:
+  repository: salon-backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+mongodb:
+  sharded: true
+  shardCount: 3
+  replicaSetCount: 3
+
+redis:
+  clusterEnabled: true
+  clusterSize: 6
+
+ingress:
+  enabled: true
+  hosts:
+    - api.salonbackend.com
+  tls: true
+
+regions:
+  primary: uae
+  replicas:
+    - saudi
+    - qatar
+
+monitoring:
+  prometheusEnabled: true
+  grafanaEnabled: true

@@ -1,0 +1,176 @@
+[
+  {
+    "step": "Phase 2 covers 6 production features: (1) Customer-facing React frontend, (2) Admin panel with calendar + charts, (3) Cron jobs for reminders + automation, (4) Arabic RTL UI with i18n, (5) POS/Square payment terminal integration, (6) Multi-tenant SaaS architecture.",
+    "type": "TEXT"
+  },
+
+  {
+    "step": "Create cron/reminders.js using node-cron. Schedule a job every 15 minutes that queries Appointment collection for appointments where date is within next 2 hours, reminderSent is false, status is confirmed. For each: call sendReminder() from utils/whatsapp.js, set reminderSent=true, create Notification document. Export startReminderJob().",
+    "type": "CODE",
+    "file": "cron/reminders.js"
+  },
+  {
+    "step": "Create cron/noShow.js using node-cron. Schedule a daily job at 11 PM that finds all appointments where date < today, status is still confirmed or pending. Update their status to no_show. Create a Notification document for each. Export startNoShowJob().",
+    "type": "CODE",
+    "file": "cron/noShow.js"
+  },
+  {
+    "step": "Create cron/loyaltyExpiry.js using node-cron. Schedule a monthly job on 1st of each month that finds customers with loyaltyPoints > 0 whose last LoyaltyTransaction of type earn is older than 365 days. Set their loyaltyPoints to 0. Create LoyaltyTransaction with type expire. Export startLoyaltyExpiryJob().",
+    "type": "CODE",
+    "file": "cron/loyaltyExpiry.js"
+  },
+  {
+    "step": "Create cron/offerExpiry.js using node-cron. Schedule a daily job at midnight that finds all Offers where validTo < now and isActive is true. Set isActive to false. Export startOfferExpiryJob().",
+    "type": "CODE",
+    "file": "cron/offerExpiry.js"
+  },
+  {
+    "step": "Update server.js to import and start all four cron jobs: startReminderJob, startNoShowJob, startLoyaltyExpiryJob, startOfferExpiryJob. Call each after MongoDB connects. Log confirmation for each job started.",
+    "type": "CODE",
+    "file": "server.js"
+  },
+
+  {
+    "step": "Create models/Tenant.js Mongoose schema with fields: name, slug (unique, indexed), ownerName, ownerEmail, ownerPhone, plan (enum: free, starter, professional, enterprise), planExpiresAt, isActive, settings (object: currency, vatRate, timezone, weekendDays array, loyaltyEnabled, whatsappEnabled), branchLimit, staffLimit, createdAt. Add index on slug.",
+    "type": "CODE",
+    "file": "models/Tenant.js"
+  },
+  {
+    "step": "Create models/TenantSubscription.js Mongoose schema with fields: tenant (ref Tenant), plan, startDate, endDate, amount, currency, stripeSubscriptionId, stripeCustomerId, status (enum: active, cancelled, expired, trialing), invoices (array of {invoiceId, amount, paidAt, url}). Index on tenant.",
+    "type": "CODE",
+    "file": "models/TenantSubscription.js"
+  },
+  {
+    "step": "Create middleware/tenant.js. Export resolveTenant middleware that reads X-Tenant-ID header or subdomain from Host header (e.g. mybranch.salonapp.com). Looks up Tenant by slug, attaches req.tenant. Returns 404 if not found, 403 if isActive is false or plan expired. Export requireTenant for routes that need it.",
+    "type": "CODE",
+    "file": "middleware/tenant.js"
+  },
+  {
+    "step": "Create routes/tenants.js. POST /tenants/register (public) creates Tenant + hashes owner password + creates free trial TenantSubscription for 14 days. POST /tenants/login authenticates tenant owner, returns JWT with tenantId claim. GET /tenants/me returns tenant info and current subscription. PUT /tenants/me/settings updates tenant settings. GET /tenants/me/usage returns count of branches, staff, bookings this month vs plan limits.",
+    "type": "CODE",
+    "file": "routes/tenants.js"
+  },
+  {
+    "step": "Create routes/subscriptions.js. POST /subscriptions/upgrade creates Stripe Checkout session for plan upgrade, return checkoutUrl. POST /subscriptions/webhook handles Stripe subscription events: customer.subscription.updated, customer.subscription.deleted, invoice.paid. Updates TenantSubscription accordingly. GET /subscriptions/plans returns array of plan objects with name, price AED, branchLimit, staffLimit, features list.",
+    "type": "CODE",
+    "file": "routes/subscriptions.js"
+  },
+  {
+    "step": "Create utils/tenantFilter.js. Export addTenantFilter(query, tenantId) that adds tenantId field to any Mongoose query object. Export requirePlanFeature(tenant, feature) that throws 403 if tenant plan does not include the feature (e.g. whatsappEnabled, loyaltyEnabled). Export checkLimit(tenant, resource, currentCount) that throws 429 with message if branch or staff count exceeds plan limit.",
+    "type": "CODE",
+    "file": "utils/tenantFilter.js"
+  },
+
+  {
+    "step": "Create models/PosTerminal.js Mongoose schema with fields: branch (ref Branch), tenant (ref Tenant), terminalId (string, unique), provider (enum: square, stripe_terminal, manual), locationId (string), isActive, lastSeenAt. Index on branch.",
+    "type": "CODE",
+    "file": "models/PosTerminal.js"
+  },
+  {
+    "step": "Create utils/pos.js. Export createSquarePayment(amount, currency, terminalId, referenceId) that calls Square Payments API to create a terminal checkout request. Export cancelSquarePayment(checkoutId). Export getSquarePaymentStatus(checkoutId) returns {status, receiptUrl}. All use SQUARE_ACCESS_TOKEN from env. Handle errors and return structured responses.",
+    "type": "CODE",
+    "file": "utils/pos.js"
+  },
+  {
+    "step": "Create routes/pos.js. POST /pos/terminals (admin) registers a new POS terminal for a branch. GET /pos/terminals?branchId= lists terminals. POST /pos/charge creates a Square terminal checkout for an appointment: validates appointment, calculates total with VAT, calls createSquarePayment, saves terminal charge reference to appointment, returns checkoutId. POST /pos/webhook handles Square terminal webhook events: payment.completed updates appointment paymentStatus to paid, creates receipt. GET /pos/receipt/:appointmentId generates and returns receipt object with line items, VAT breakdown, total in AED.",
+    "type": "CODE",
+    "file": "routes/pos.js"
+  },
+  {
+    "step": "Create utils/receipt.js. Export generateReceipt(appointment) that returns a structured receipt object: {receiptNumber, date, branch:{name,address,phone}, customer:{name,phone}, items:[{service, stylist, duration, subtotal, vatAmount, total}], subtotalAll, vatAll, discountAmount, loyaltyRedeemed, grandTotal, paymentMethod, currency:'AED'}. Export formatReceiptText(receipt) that returns a plain text version for WhatsApp/SMS.",
+    "type": "CODE",
+    "file": "utils/receipt.js"
+  },
+
+  {
+    "step": "Create locales/en.json with all translation keys for the API response messages and notification templates. Keys: auth.loginSuccess, auth.invalidCredentials, appointment.created, appointment.cancelled, appointment.noSlot, loyalty.earned, loyalty.redeemed, loyalty.insufficient, offer.invalid, offer.expired, offer.maxUsed, payment.success, payment.failed, receipt.title, whatsapp.confirmation, whatsapp.reminder, whatsapp.cancellation.",
+    "type": "CODE",
+    "file": "locales/en.json"
+  },
+  {
+    "step": "Create locales/ar.json with the same keys as en.json but all values translated to Arabic. Use formal Gulf Arabic appropriate for UAE. Include RTL-friendly message formatting. Appointment confirmations should include Arabic date format (day month year).",
+    "type": "CODE",
+    "file": "locales/ar.json"
+  },
+  {
+    "step": "Create utils/i18n.js. Export t(key, lang='en', vars={}) that loads the correct locale JSON (en or ar), finds the key using dot notation, replaces {{variable}} placeholders with vars values. Export getCustomerLang(customer) that returns customer.preferredLanguage or 'en'. Export formatDateForLang(date, lang) that returns Arabic date string for lang='ar' using Intl.DateTimeFormat with locale 'ar-AE', or English format for 'en'.",
+    "type": "CODE",
+    "file": "utils/i18n.js"
+  },
+  {
+    "step": "Update utils/whatsapp.js to accept a lang parameter in all three functions (sendBookingConfirmation, sendReminder, sendCancellation). Import t and formatDateForLang from utils/i18n.js. Build message body using t() with the customer's preferred language. Arabic messages should be formatted RTL-friendly with proper Arabic punctuation.",
+    "type": "CODE",
+    "file": "utils/whatsapp.js"
+  },
+
+  {
+    "step": "Create frontend/index.html as the shell for a React SPA. Include Vite script tags, RTL-aware CSS (set dir attribute dynamically via JS), import Google Fonts Noto Sans Arabic for Arabic support. Root div id=root. Meta tags for UAE app: og:title, description in both EN and AR.",
+    "type": "CODE",
+    "file": "frontend/index.html"
+  },
+  {
+    "step": "Create frontend/src/main.jsx React entry point. Import React, ReactDOM, App, i18n config, and global CSS. Render App into root. Set document.dir based on current language ('rtl' for ar, 'ltr' for en).",
+    "type": "CODE",
+    "file": "frontend/src/main.jsx"
+  },
+  {
+    "step": "Create frontend/src/App.jsx React component. Set up React Router with routes: / (Home/service browser), /book (booking flow), /booking/:id (confirmation page), /my-bookings (customer dashboard), /admin (admin panel wrapper). Include a Navbar with language toggle (EN/AR) and login button. Use React Context for auth state and language state.",
+    "type": "CODE",
+    "file": "frontend/src/App.jsx"
+  },
+  {
+    "step": "Create frontend/src/pages/ServiceBrowser.jsx React component. Fetch GET /api/v1/categories and GET /api/v1/services. Display services grouped by category in a responsive card grid. Each card shows name (in selected language), price in AED, duration in minutes, and a Book Now button. Include search input and filter by category. Support RTL layout when language is Arabic.",
+    "type": "CODE",
+    "file": "frontend/src/pages/ServiceBrowser.jsx"
+  },
+  {
+    "step": "Create frontend/src/pages/BookingFlow.jsx React multi-step form component. Step 1: Select service (if not pre-selected). Step 2: Select branch and preferred stylist (fetch GET /api/v1/staff?branchId=). Step 3: Select date using a date picker, then fetch and display available time slots from GET /api/v1/staff/:id/availability. Step 4: Enter customer details (name, phone, optional email). Step 5: Review and confirm — show price breakdown with VAT, apply offer code via POST /api/v1/offers/validate. Submit to POST /api/v1/appointments.",
+    "type": "CODE",
+    "file": "frontend/src/pages/BookingFlow.jsx"
+  },
+  {
+    "step": "Create frontend/src/pages/BookingConfirmation.jsx React component. Fetch appointment by ID. Display: confirmation number, service, stylist, branch address, date and time, price breakdown (subtotal, VAT 5%, total in AED), WhatsApp confirmation sent notice. Include Add to Calendar button (generates .ics file). Include Cancel Appointment button that calls DELETE /api/v1/appointments/:id.",
+    "type": "CODE",
+    "file": "frontend/src/pages/BookingConfirmation.jsx"
+  },
+  {
+    "step": "Create frontend/src/pages/AdminDashboard.jsx React component (protected, staff only). Show KPI cards: today's appointments, revenue today in AED, new customers this week, average rating. Include a weekly appointment calendar view (7 columns, time rows). Include a bar chart of revenue last 30 days using Recharts. Include a pie chart of appointments by status. Fetch data from GET /api/v1/analytics/revenue and GET /api/v1/analytics/appointments.",
+    "type": "CODE",
+    "file": "frontend/src/pages/AdminDashboard.jsx"
+  },
+  {
+    "step": "Create frontend/src/services/api.js. Export an axios instance configured with baseURL from env VITE_API_URL. Add request interceptor to attach Authorization Bearer token from localStorage. Add response interceptor to handle 401 (clear token, redirect to login) and 403 (show permission error). Export typed helper functions: getServices(), getStaff(branchId), getAvailability(staffId, date, serviceId), createAppointment(data), validateOffer(code, amount), getAnalytics(from, to).",
+    "type": "CODE",
+    "file": "frontend/src/services/api.js"
+  },
+  {
+    "step": "Create frontend/src/contexts/AuthContext.jsx React context. Provide: user, token, login(phone, password), loginStaff(email, password), logout(), isAuthenticated, isStaff, role. Store token in localStorage. On mount, validate token expiry. Export useAuth hook.",
+    "type": "CODE",
+    "file": "frontend/src/contexts/AuthContext.jsx"
+  },
+  {
+    "step": "Create frontend/src/contexts/LangContext.jsx React context. Provide: lang ('en' or 'ar'), setLang(lang), t(key) translation function that reads from imported en.json or ar.json based on lang, dir ('ltr' or 'rtl'). On lang change, update document.dir and document.documentElement.lang. Export useLang hook.",
+    "type": "CODE",
+    "file": "frontend/src/contexts/LangContext.jsx"
+  },
+  {
+    "step": "Create frontend/package.json for the React frontend. Use Vite as bundler. Dependencies: react, react-dom, react-router-dom, axios, recharts, @headlessui/react, react-datepicker, react-hot-toast. DevDependencies: vite, @vitejs/plugin-react, tailwindcss, autoprefixer, postcss. Scripts: dev, build, preview.",
+    "type": "CODE",
+    "file": "frontend/package.json"
+  },
+  {
+    "step": "Create frontend/vite.config.js. Configure Vite with React plugin. Set server proxy: /api → http://localhost:3000 to avoid CORS in development. Set build outDir to ../public for Express to serve.",
+    "type": "CODE",
+    "file": "frontend/vite.config.js"
+  },
+  {
+    "step": "Create frontend/tailwind.config.js. Configure Tailwind with content paths for src/**/*.{jsx,js}. Extend theme with UAE salon brand colors: primary (rose/pink), secondary (gold), neutral (slate). Add RTL plugin support. Configure fontFamily with Noto Sans Arabic as fallback for Arabic text.",
+    "type": "CODE",
+    "file": "frontend/tailwind.config.js"
+  },
+
+  {
+    "step": "Phase 2 complete. New dependencies to install in backend: npm install node-cron square. New dependencies for frontend: cd frontend && npm install. Start backend: node server.js. Start frontend dev: cd frontend && npm run dev. Build frontend for production: cd frontend && npm run build. All cron jobs start automatically with the server. Multi-tenant: pass X-Tenant-ID header on all API requests. POS: register terminal first via POST /api/v1/pos/terminals.",
+    "type": "TEXT"
+  }
+]

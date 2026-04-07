@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: [27017:27017]
+        options: --health-cmd "mongosh --eval 'db.runCommand(\"ping\")'" --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check — models
+        run: for f in models/*.js; do node --check "$f" && echo "OK: $f"; done
+
+      - name: Syntax check — routes
+        run: for f in routes/*.js; do node --check "$f" && echo "OK: $f"; done
+
+      - name: Syntax check — middleware
+        run: for f in middleware/*.js; do node --check "$f" && echo "OK: $f"; done
+
+      - name: Syntax check — utils
+        run: for f in utils/*.js; do node --check "$f" && echo "OK: $f"; done
+
+      - name: Syntax check — core
+        run: node --check app.js && node --check server.js
+
+      - name: Health check — server starts
+        env:
+          PORT: 3001
+          NODE_ENV: test
+          MONGO_URI: mongodb://localhost:27017/salon_ci
+          REDIS_URL: redis://localhost:6379/1
+          JWT_SECRET: ci_test_jwt_secret_exactly_32_chars_x
+          JWT_EXPIRES_IN: 1h
+          VAT_RATE: '0.05'
+          TWILIO_ACCOUNT_SID: ACtest
+          TWILIO_AUTH_TOKEN: testtoken
+          TWILIO_WHATSAPP_FROM: whatsapp:+14155238886
+          STRIPE_SECRET_KEY: sk_test_dummy
+          METRICS_TOKEN: ci_token
+        run: |
+          node server.js &
+          sleep 8
+          curl --fail http://localhost:3001/health && echo "Health check passed"

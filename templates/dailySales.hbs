@@ -1,0 +1,64 @@
+```html
+<!-- dailySales.hbs -->
+<div style="color: #FFD700;">
+    <header>
+        <h1>{{tenantName}}</h1>
+        <p>Date: {{date}}</p>
+    </header>
+    
+    <section id="kpi-cards">
+        {{#each kpiCards}}
+            <div class="card">
+                <h2>{{this.title}}</h2>
+                <p>{{this.value}}</p>
+            </div>
+        {{/each}}
+    </section>
+    
+    <section id="revenue-breakdown">
+        <!-- Implement your own logic here -->
+    </section>
+    
+    <section id="top-services">
+        <table>
+            <thead>
+                <tr>
+                    <th>Service</th>
+                    <th>Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each topServices}}
+                    <tr>
+                        <td>{{this.serviceName}}</td>
+                        <td>{{this.revenue}}</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </section>
+    
+    <section id="staff-performance">
+        <!-- Implement your own logic here -->
+    </section>
+    
+    <section id="hourly-breakdown">
+        <!-- Implement your own logic here -->
+    </section>
+    
+    <section id="appointment-list">
+        {{#each appointments}}
+            <div class="appointment">
+                <h2>{{this.title}}</h2>
+                <p>Date: {{this.date}}</p>
+                <!-- Add more details as needed -->
+            </div>
+        {{/each}}
+    </section>
+    
+    <footer>
+        <p>Page {{pageNumber}} of {{totalPages}}</p>
+    </footer>
+</div>
+```
+This is a basic template and you will need to implement the logic for revenue breakdown, staff performance, hourly breakdown, etc. as per your requirements. The CSS color used here is gold (#FFD700). You can replace it with any other color of your choice.

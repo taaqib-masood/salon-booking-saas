@@ -1,0 +1,70 @@
+```html
+<!-- templates/monthlyVAT.hbs -->
+<!-- This is a Handlebars HTML template for Monthly UAE VAT Summary report for FTA compliance -->
+
+<!-- Include the necessary CSS and JS files -->
+<link rel="stylesheet" href="/path/to/your/css/file.css">
+<script src="/path/to/your/js/file.js"></script>
+
+<!-- Start of the HTML body -->
+<body>
+    <div class="container">
+        <h1>Monthly UAE VAT Summary Report</h1>
+        
+        <!-- Tenant TRN section -->
+        <section id="tenant-trn">
+            <h2>Tenant TRN: {{this.tenantTRN}}</h2>
+        </section>
+
+        <!-- VAT calculation summary table -->
+        <section id="vat-summary">
+            <h2>VAT Calculation Summary Table</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Total Sales (AED)</th>
+                        <th>VAT Rate (%)</th>
+                        <th>VAT Amount (AED)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each this.vatSummary}}
+                    <tr>
+                        <td>{{this.category}}</td>
+                        <td>{{this.totalSales}}</td>
+                        <td>{{this.vatRate}}</td>
+                        <td>{{this.vatAmount}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Weekly breakdown section -->
+        <section id="weekly-breakdown">
+            <h2>Weekly Breakdown</h2>
+            <!-- Add your weekly breakdown content here -->
+        </section>
+
+        <!-- Sales by category section -->
+        <section id="sales-by-category">
+            <h2>Sales By Category</h2>
+            <!-- Add your sales by category content here -->
+        </section>
+
+        <!-- Invoice list section -->
+        <section id="invoice-list">
+            <h2>Invoice List</h2>
+            <!-- Add your invoice list content here -->
+        </section>
+
+        <!-- Declaration section -->
+        <section id="declaration">
+            <h2>Declaration</h2>
+            <!-- Add your declaration content here -->
+        </section>
+    </div>
+</body>
+```
+This is a basic template for the Monthly UAE VAT Summary report. You will need to replace `{{this.tenantTRN}}`, `{{#each this.vatSummary}}` with your actual data from MongoDB. Also, you may want to customize the CSS and JS files according to your needs.

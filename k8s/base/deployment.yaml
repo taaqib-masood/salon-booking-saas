@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: salon-api
+  namespace: salon-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: salon-api
+  template:
+    metadata:
+      labels:
+        app: salon-api
+    spec:
+      containers:
+      - name: api
+        image: salon-backend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: salon-secrets
+              key: mongodb-uri
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: salon-api
+  namespace: salon-backend
+spec:
+  selector:
+    app: salon-api
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: ClusterIP

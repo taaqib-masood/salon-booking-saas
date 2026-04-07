@@ -1,0 +1,125 @@
+{
+  "project": "salon-booking-saas",
+  "github_user": "taaqib-masood",
+  "location": "/home/gaganverma/ai-dev-system/output",
+  "steps": [
+
+    {
+      "id": 1,
+      "title": "Install Phase 3 packages + node-cron",
+      "commands": [
+        "cd /home/gaganverma/ai-dev-system/output && npm install node-cron winston winston-daily-rotate-file prom-client ioredis bullmq rate-limit-redis @aws-sdk/client-s3 @aws-sdk/lib-storage handlebars exceljs nodemailer @bull-board/express @bull-board/api",
+        "cd /home/gaganverma/ai-dev-system/output && npm list --depth=0"
+      ]
+    },
+
+    {
+      "id": 2,
+      "title": "Update package.json name and scripts",
+      "commands": [
+        "cd /home/gaganverma/ai-dev-system/output && node -e \"const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.name='salon-booking-saas';p.version='1.0.0';p.description='Production-grade UAE Salon Booking SaaS Backend';p.scripts={start:'node server.js',dev:'node --watch server.js',healthcheck:'node scripts/healthCheck.js'};fs.writeFileSync('package.json',JSON.stringify(p,null,2));console.log('Done');\""
+      ]
+    },
+
+    {
+      "id": 3,
+      "title": "Create .env file",
+      "commands": [
+        "cat > /home/gaganverma/ai-dev-system/output/.env << 'ENVEOF'\nPORT=3000\nNODE_ENV=development\n\n# MongoDB\nMONGO_URI=mongodb://localhost:27017/salon_saas\nMONGO_APP_USER=salonapp\nMONGO_APP_PASS=changeme123\n\n# JWT\nJWT_SECRET=your_jwt_secret_min_32_chars_change_this_now\nJWT_EXPIRES_IN=7d\nREFRESH_TOKEN_TTL_DAYS=30\n\n# Redis\nREDIS_URL=redis://localhost:6379/0\nREDIS_HOST=localhost\nREDIS_PORT=6379\nREDIS_PASSWORD=\n\n# Twilio WhatsApp\nTWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nTWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nTWILIO_WHATSAPP_FROM=whatsapp:+14155238886\n\n# Stripe\nSTRIPE_SECRET_KEY=sk_test_PLACEHOLDER_REPLACE_ME\nSTRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxx\n\n# Square POS\nSQUARE_ACCESS_TOKEN=EAAAxxxxxxxxxxxxxxxxxxxxxxxxx\nSQUARE_ENVIRONMENT=sandbox\n\n# AWS S3\nAWS_ACCESS_KEY_ID=AKIAxxxxxxxxxxxxxxxx\nAWS_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nAWS_REGION=me-south-1\nS3_BACKUP_BUCKET=salon-saas-backups\n\n# SMTP\nSMTP_HOST=smtp.sendgrid.net\nSMTP_PORT=587\nSMTP_USER=apikey\nSMTP_PASS=SG.xxxxxxxxxxxxxxxxxxxxxxxxx\n\n# Alerts\nSLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz\nDISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/xxx/yyy\n\n# Security\nMETRICS_TOKEN=changeme_metrics_token_here\nADMIN_IP_WHITELIST=127.0.0.1,192.168.1.0/24\nALLOWED_ORIGINS=http://localhost:5173,https://yourdomain.com\n\n# VAT & Monitoring\nVAT_RATE=0.05\nSLOW_QUERY_THRESHOLD_MS=500\nBUILD_DATE=2026-04-07\nENVEOF"
+      ]
+    },
+
+    {
+      "id": 4,
+      "title": "Create production .gitignore",
+      "commands": [
+        "cat > /home/gaganverma/ai-dev-system/output/.gitignore << 'EOF'\nnode_modules/\nfrontend/node_modules/\n.env\n.env.local\n.env.production\nlogs/\n*.log\nfrontend/dist/\ncoverage/\n.DS_Store\ntmp/\n.cache/\nEOF"
+      ]
+    },
+
+    {
+      "id": 5,
+      "title": "Create GitHub Actions CI workflow",
+      "commands": [
+        "mkdir -p /home/gaganverma/ai-dev-system/output/.github/workflows",
+        "cat > /home/gaganverma/ai-dev-system/output/.github/workflows/ci.yml << 'EOF'\nname: CI\n\non:\n  push:\n    branches: ['**']\n  pull_request:\n    branches: [main, develop]\n\njobs:\n  lint-and-test:\n    runs-on: ubuntu-latest\n\n    services:\n      mongodb:\n        image: mongo:7.0\n        ports: [27017:27017]\n        options: --health-cmd \"mongosh --eval 'db.runCommand(\\\"ping\\\")' \" --health-interval 10s --health-timeout 5s --health-retries 5\n      redis:\n        image: redis:7-alpine\n        ports: [6379:6379]\n        options: --health-cmd \"redis-cli ping\" --health-interval 10s --health-timeout 5s --health-retries 5\n\n    steps:\n      - uses: actions/checkout@v4\n\n      - name: Setup Node.js 20\n        uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n          cache: 'npm'\n\n      - name: Install dependencies\n        run: npm ci\n\n      - name: Syntax check all source files\n        run: |\n          for f in app.js server.js models/*.js routes/*.js middleware/*.js utils/*.js cron/*.js; do\n            node --check \"$f\" && echo \"OK: $f\"\n          done\n\n      - name: Health check — server starts\n        env:\n          PORT: 3001\n          NODE_ENV: test\n          MONGO_URI: mongodb://localhost:27017/salon_ci\n          REDIS_URL: redis://localhost:6379/1\n          JWT_SECRET: ci_test_jwt_secret_exactly_32_chars_x\n          JWT_EXPIRES_IN: 1h\n          VAT_RATE: '0.05'\n          TWILIO_ACCOUNT_SID: ACtest\n          TWILIO_AUTH_TOKEN: testtoken\n          TWILIO_WHATSAPP_FROM: whatsapp:+14155238886\n          STRIPE_SECRET_KEY: sk_test_PLACEHOLDER\n          METRICS_TOKEN: ci_token\n        run: |\n          node server.js &\n          sleep 8\n          curl --fail http://localhost:3001/health\n          echo \"Health check passed\"\nEOF"
+      ]
+    },
+
+    {
+      "id": 6,
+      "title": "Create GitHub Actions Deploy workflow",
+      "commands": [
+        "cat > /home/gaganverma/ai-dev-system/output/.github/workflows/deploy.yml << 'EOF'\nname: Deploy\n\non:\n  push:\n    branches: [main]\n  workflow_dispatch:\n\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    environment: production\n\n    steps:\n      - uses: actions/checkout@v4\n\n      - name: Setup Node.js 20\n        uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n          cache: 'npm'\n\n      - name: Install dependencies\n        run: npm ci --only=production\n\n      - name: Deploy via SSH\n        uses: appleboy/ssh-action@v1.0.3\n        with:\n          host: ${{ secrets.SERVER_HOST }}\n          username: ${{ secrets.SERVER_USER }}\n          key: ${{ secrets.SERVER_SSH_KEY }}\n          port: ${{ secrets.SERVER_PORT }}\n          script: |\n            cd /var/www/salon-booking-saas\n            git pull origin main\n            npm ci --only=production\n            pm2 restart salon-api --update-env\n            pm2 save\n            echo \"Deployed at $(date)\"\n\n      - name: Notify Slack on success\n        if: success()\n        run: |\n          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \\\n            -H 'Content-type: application/json' \\\n            -d '{\"text\":\"Salon API deployed to production successfully. Commit: ${{ github.sha }}\"}'\n\n      - name: Notify Slack on failure\n        if: failure()\n        run: |\n          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \\\n            -H 'Content-type: application/json' \\\n            -d '{\"text\":\"FAILED: Salon API deployment failed. Commit: ${{ github.sha }}\"}'\nEOF"
+      ]
+    },
+
+    {
+      "id": 7,
+      "title": "Create new GitHub repo using gh CLI",
+      "commands": [
+        "gh repo create taaqib-masood/salon-booking-saas --public --description 'Production-grade UAE Salon Booking SaaS Backend — Node.js, Express, MongoDB, Multi-tenant, WhatsApp, Stripe, POS' --homepage 'https://github.com/taaqib-masood/salon-booking-saas'"
+      ]
+    },
+
+    {
+      "id": 8,
+      "title": "Update git remote to new repo",
+      "commands": [
+        "cd /home/gaganverma/ai-dev-system/output && git remote remove origin",
+        "cd /home/gaganverma/ai-dev-system/output && git remote add origin https://github.com/taaqib-masood/salon-booking-saas.git"
+      ]
+    },
+
+    {
+      "id": 9,
+      "title": "Stage all files and commit",
+      "commands": [
+        "cd /home/gaganverma/ai-dev-system/output && git add .github/ package.json .gitignore cron/ locales/ middleware/tenant.js models/Tenant.js models/TenantSubscription.js models/PosTerminal.js routes/tenants.js routes/subscriptions.js routes/pos.js utils/i18n.js utils/tenantFilter.js utils/receipt.js utils/pos.js frontend/",
+        "cd /home/gaganverma/ai-dev-system/output && git status",
+        "cd /home/gaganverma/ai-dev-system/output && git commit -m 'feat: Phase 1+2 complete — UAE Salon Booking SaaS Backend\n\nPhase 1 — Core:\n- 9 Mongoose models with UAE VAT 5%, AED currency, EN/AR bilingual fields\n- 14 Express routes: auth, branches, staff, services, appointments, customers\n- JWT auth with role-based access (admin/manager/receptionist/stylist)\n- Loyalty points, cancellation policy, real-time slot availability\n- Stripe payments + Twilio WhatsApp notifications\n\nPhase 2 — SaaS:\n- Multi-tenant architecture with X-Tenant-ID header routing\n- Cron jobs: reminders, no-show, loyalty expiry, offer expiry\n- Square POS terminal integration with receipt generation\n- Arabic i18n (EN/AR) with Intl.DateTimeFormat for UAE locale\n- React frontend scaffold with Vite + Tailwind + RTL support\n\nCI/CD:\n- GitHub Actions CI: syntax check + health check on every push\n- GitHub Actions Deploy: SSH deploy to production on main branch\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>'"
+      ]
+    },
+
+    {
+      "id": 10,
+      "title": "Push main branch",
+      "commands": [
+        "cd /home/gaganverma/ai-dev-system/output && git push -u origin main"
+      ]
+    },
+
+    {
+      "id": 11,
+      "title": "Create and push develop branch",
+      "commands": [
+        "cd /home/gaganverma/ai-dev-system/output && git checkout -b develop",
+        "cd /home/gaganverma/ai-dev-system/output && git push -u origin develop",
+        "cd /home/gaganverma/ai-dev-system/output && git checkout main"
+      ]
+    },
+
+    {
+      "id": 12,
+      "title": "Set develop as default branch for PRs + add GitHub Secrets instructions",
+      "commands": [
+        "gh repo edit taaqib-masood/salon-booking-saas --default-branch main",
+        "gh api repos/taaqib-masood/salon-booking-saas/branches/main/protection --method PUT --field required_status_checks='{\"strict\":true,\"contexts\":[\"lint-and-test\"]}' --field enforce_admins=false --field required_pull_request_reviews=null --field restrictions=null",
+        "echo 'Add these secrets at: https://github.com/taaqib-masood/salon-booking-saas/settings/secrets/actions'",
+        "echo 'Required secrets: SERVER_HOST, SERVER_USER, SERVER_SSH_KEY, SERVER_PORT, SLACK_WEBHOOK_URL'"
+      ]
+    },
+
+    {
+      "id": 13,
+      "title": "Verify final state",
+      "commands": [
+        "cd /home/gaganverma/ai-dev-system/output && git log --oneline",
+        "cd /home/gaganverma/ai-dev-system/output && git branch -a",
+        "gh repo view taaqib-masood/salon-booking-saas",
+        "echo 'Repo URL: https://github.com/taaqib-masood/salon-booking-saas'"
+      ]
+    }
+
+  ]
+}

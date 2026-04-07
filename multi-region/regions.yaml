@@ -1,0 +1,30 @@
+
+regions:
+  uae:
+    name: "UAE (Primary)"
+    location: "me-south-1"
+    mongodb: "mongodb://uae-cluster:27017"
+    redis: "redis://uae-cache:6379"
+    weight: 70
+    primary: true
+  
+  saudi:
+    name: "KSA (Replica)"
+    location: "me-central-1"
+    mongodb: "mongodb://ksa-cluster:27017"
+    redis: "redis://ksa-cache:6379"
+    weight: 20
+    primary: false
+  
+  qatar:
+    name: "Qatar (Replica)"
+    location: "qatar"
+    mongodb: "mongodb://qatar-cluster:27017"
+    redis: "redis://qatar-cache:6379"
+    weight: 10
+    primary: false
+
+failover:
+  enabled: true
+  healthCheckInterval: 30
+  failoverThreshold: 3

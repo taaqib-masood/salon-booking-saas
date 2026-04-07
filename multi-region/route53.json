@@ -1,0 +1,38 @@
+
+{
+  "Comment": "Multi-region DNS with latency-based routing",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "api.salonbackend.com",
+        "Type": "A",
+        "SetIdentifier": "uae-primary",
+        "GeoLocation": {
+          "ContinentCode": "AS"
+        },
+        "AliasTarget": {
+          "HostedZoneId": "ZONE_ID_UAE",
+          "DNSName": "uae-lb.salonbackend.com",
+          "EvaluateTargetHealth": true
+        }
+      }
+    },
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "api.salonbackend.com",
+        "Type": "A",
+        "SetIdentifier": "saudi-secondary",
+        "GeoLocation": {
+          "CountryCode": "SA"
+        },
+        "AliasTarget": {
+          "HostedZoneId": "ZONE_ID_KSA",
+          "DNSName": "ksa-lb.salonbackend.com",
+          "EvaluateTargetHealth": true
+        }
+      }
+    }
+  ]
+}
