@@ -73,3 +73,4 @@ frontend-demo/dist/
 # Phase specific
 phase*_plan.json
 prompt_*.txt
+minikube-linux-amd64
