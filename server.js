@@ -1,13 +1,10 @@
-import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import app from './app.js';
 
 // Load environment variables from .env file
 dotenv.config();
 const { PORT, MONGODB_URI } = process.env;
-
-// Create Express server
-const app = express();
 
 // Connect to MongoDB with retry on failure
 function connectToMongo() {
