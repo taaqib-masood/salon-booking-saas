@@ -1,61 +1,94 @@
 import express from 'express';
-import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import StaffModel from '../models/staff.model.js';
-import CustomerModel from '../models/customer.model.js';
-import GuestCustomerModel from '../models/guest-customer.model.js';
+import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET;
 
-router.post('/auth/staff/login', 
-    body('email').isEmail(),
-    body('password').exists(),
-    async (req, res) => {
-        const staff = await StaffModel.findOne({ email: req.body.email });
-        if (!staff || !bcrypt.compareSync(req.body.password, staff.password)) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-        const token = jwt.sign({ id: staff._id }, process.env.JWT_SECRET);
-        res.json({ token });
-    }
-);
+// Staff login
+router.post('/staff/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-router.post('/auth/customer/register', 
-    body('email').isEmail(),
-    body('password').exists(),
-    async (req, res) => {
-        const hashedPassword = bcrypt.hashSync(req.body.password, 8);
-        const customer = new CustomerModel({ ...req.body, password: hashedPassword });
-        await customer.save();
-        res.json({ message: 'Customer registered successfully' });
-    }
-);
+  const { data: staff, error } = await supabase
+    .from('staff')
+    .select('id, name, email, role, tenant_id, branch_id, password_hash, is_deleted')
+    .eq('email', email.toLowerCase())
+    .eq('is_deleted', false)
+    .single();
 
-router.post('/auth/customer/login', 
-    body('phone').isMobilePhone(),
-    body('password').exists(),
-    async (req, res) => {
-        const customer = await CustomerModel.findOne({ phone: req.body.phone });
-        if (!customer || !bcrypt.compareSync(req.body.password, customer.password)) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-        const token = jwt.sign({ id: customer._id }, process.env.JWT_SECRET);
-        res.json({ token });
-    }
-);
+  if (error || !staff) return res.status(401).json({ error: 'Invalid credentials' });
 
-router.post('/auth/customer/guest', 
-    body('phone').isMobilePhone(),
-    async (req, res) => {
-        let guest = await GuestCustomerModel.findOne({ phone: req.body.phone });
-        if (!guest) {
-            guest = new GuestCustomerModel(req.body);
-            await guest.save();
-        }
-        const token = jwt.sign({ id: guest._id }, process.env.JWT_SECRET);
-        res.json({ token });
-    }
-);
+  const valid = await bcrypt.compare(password, staff.password_hash);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const token = jwt.sign(
+    { id: staff.id, tenant_id: staff.tenant_id, role: staff.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  res.json({
+    token,
+    staff: { id: staff.id, name: staff.name, email: staff.email, role: staff.role, tenant_id: staff.tenant_id },
+  });
+});
+
+// Tenant register (creates tenant + owner staff account)
+router.post('/register', async (req, res) => {
+  const { business_name, email, password, name, phone } = req.body;
+  if (!business_name || !email || !password || !name) {
+    return res.status(400).json({ error: 'business_name, email, password, name required' });
+  }
+
+  // Create tenant
+  const { data: tenant, error: tenantErr } = await supabase
+    .from('tenants')
+    .insert({ name: business_name, email, phone, is_active: true })
+    .select()
+    .single();
+
+  if (tenantErr) return res.status(400).json({ error: tenantErr.message });
+
+  const password_hash = await bcrypt.hash(password, 10);
+
+  const { data: staff, error: staffErr } = await supabase
+    .from('staff')
+    .insert({ tenant_id: tenant.id, name, email: email.toLowerCase(), password_hash, role: 'owner' })
+    .select('id, name, email, role, tenant_id')
+    .single();
+
+  if (staffErr) return res.status(400).json({ error: staffErr.message });
+
+  const token = jwt.sign(
+    { id: staff.id, tenant_id: staff.tenant_id, role: staff.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  res.status(201).json({ token, tenant, staff });
+});
+
+// Customer login by phone
+router.post('/customer/login', async (req, res) => {
+  const { phone, password } = req.body;
+  if (!phone || !password) return res.status(400).json({ error: 'Phone and password required' });
+
+  const { data: customer, error } = await supabase
+    .from('customers')
+    .select('id, name, phone, email, tenant_id, password_hash, is_deleted')
+    .eq('phone', phone)
+    .eq('is_deleted', false)
+    .single();
+
+  if (error || !customer) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const valid = await bcrypt.compare(password, customer.password_hash);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const token = jwt.sign({ id: customer.id, tenant_id: customer.tenant_id, type: 'customer' }, JWT_SECRET, { expiresIn: '30d' });
+  res.json({ token, customer: { id: customer.id, name: customer.name, phone: customer.phone } });
+});
 
 export default router;
