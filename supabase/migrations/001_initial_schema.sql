@@ -463,7 +463,7 @@ CREATE TABLE webhooks (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   url         TEXT NOT NULL CHECK (url LIKE 'https://%'),
-  secret      TEXT NOT NULL DEFAULT encode(gen_random_bytes(16), 'hex'),
+  secret      TEXT NOT NULL DEFAULT encode(extensions.gen_random_bytes(16), 'hex'),
   events      TEXT[] NOT NULL DEFAULT '{}',
   is_active   BOOLEAN NOT NULL DEFAULT true,
   stats       JSONB NOT NULL DEFAULT '{}'::jsonb,
