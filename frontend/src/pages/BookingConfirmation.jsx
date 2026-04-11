@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import IcalLink from './IcalLink';
 
-const BookingConfirmation = ({ match }) => {
+const BookingConfirmation = () => {
+  const { id } = useParams();
   const [appointment, setAppointment] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/v1/appointments/${match.params.id}`);
+        const response = await axios.get(`/api/v1/appointments/${id}`);
         setAppointment(response.data);
       } catch (error) {
         console.log('Error fetching appointment:', error);
@@ -16,11 +18,11 @@ const BookingConfirmation = ({ match }) => {
     };
 
     fetchData();
-  }, [match.params.id]);
+  }, [id]);
 
   const handleCancel = async () => {
     try {
-      await axios.delete(`/api/v1/appointments/${match.params.id}`);
+      await axios.delete(`/api/v1/appointments/${id}`);
       alert('Appointment cancelled successfully');
     } catch (error) {
       console.log('Error cancelling appointment:', error);
