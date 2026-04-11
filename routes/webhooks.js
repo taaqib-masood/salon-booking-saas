@@ -1,17 +1,15 @@
-```javascript
 import express from 'express';
+import { getWebhooks, createWebhook, updateWebhook, deleteWebhook, getWebhookDeliveries } from '../controllers/webhookController.js';
+import { authenticate, authorize } from '../middleware/auth.js';
+
 const router = express.Router();
 
-// Import your webhook controller here
-import { getWebhooks, registerWebhook, updateWebhook, regenerateSecret, deleteWebhook, getDeliveries, testWebhook } from '../controllers/webhookController.js';
+router.use(authenticate);
 
-router.get('/', getWebhooks);
-router.post('/register', registerWebhook);
-router.put('/:id', updateWebhook);
-router.post('/:id/regenerate-secret', regenerateSecret);
-router.delete('/:id', deleteWebhook);
-router.get('/:id/deliveries', getDeliveries);
-router.post('/:id/test', testWebhook);
+router.get('/',                       getWebhooks);
+router.post('/',                      authorize('owner', 'admin'), createWebhook);
+router.put('/:id',                    authorize('owner', 'admin'), updateWebhook);
+router.delete('/:id',                 authorize('owner', 'admin'), deleteWebhook);
+router.get('/:id/deliveries',         getWebhookDeliveries);
 
 export default router;
-```

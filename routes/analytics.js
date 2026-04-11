@@ -1,37 +1,21 @@
 import express from 'express';
+import {
+  getRevenueAnalytics,
+  getAppointmentAnalytics,
+  getStaffCommission,
+  getTopServices,
+  getCustomerSummary,
+} from '../controllers/analyticsController.js';
+import { authenticate, authorize } from '../middleware/auth.js';
+
 const router = express.Router();
 
-// Import your analytics controller here
-// import { getRevenueAnalytics, getAppointmentAnalytics, getStaffCommission, getTopServices, getCustomerSummary } from '../controllers/analyticsController.js';
+router.use(authenticate);
 
-router.get('/revenue', (req, res) => {
-  // Call your analytics controller here to handle the request
-  // const data = getRevenueAnalytics(req.query);
-  // res.json(data);
-});
-
-router.get('/appointments', (req, res) => {
-  // Call your analytics controller here to handle the request
-  // const data = getAppointmentAnalytics(req.query);
-  // res.json(data);
-});
-
-router.get('/staff/:id/commission', (req, res) => {
-  // Call your analytics controller here to handle the request
-  // const data = getStaffCommission(req.params.id, req.query);
-  // res.json(data);
-});
-
-router.get('/top-services', (req, res) => {
-  // Call your analytics controller here to handle the request
-  // const data = getTopServices(req.query.limit || 10);
-  // res.json(data);
-});
-
-router.get('/customers/summary', (req, res) => {
-  // Call your analytics controller here to handle the request
-  // const data = getCustomerSummary();
-  // res.json(data);
-});
+router.get('/revenue', getRevenueAnalytics);
+router.get('/appointments', getAppointmentAnalytics);
+router.get('/staff/commission', authorize('owner', 'admin', 'manager'), getStaffCommission);
+router.get('/top-services', getTopServices);
+router.get('/customers/summary', getCustomerSummary);
 
 export default router;

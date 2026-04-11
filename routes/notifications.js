@@ -1,13 +1,13 @@
 import express from 'express';
+import { getNotifications, createNotification, markSent } from '../controllers/notifications.js';
+import { authenticate } from '../middleware/auth.js';
+
 const router = express.Router();
 
-// Import the notification controller
-import * as notificationsController from '../controllers/notifications.js';
+router.use(authenticate);
 
-router.post('/send', notificationsController.sendNotification);
-
-router.get('/', notificationsController.listNotifications);
-
-router.post('/reminder-batch', notificationsController.sendReminders);
+router.get('/',       getNotifications);
+router.post('/',      createNotification);
+router.patch('/:id/sent', markSent);
 
 export default router;

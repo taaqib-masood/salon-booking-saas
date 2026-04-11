@@ -1,40 +1,37 @@
-```javascript
-import NodeCache from 'node-cache';
+// cache.js — in-memory response caching middleware
+// Note: This uses a simple Map; for multi-instance deployments use Redis via ioredis
 
-const cache = new NodeCache();
+const cache = new Map();
 
 export const cacheResponse = (ttlSeconds, keyFn) => {
   return (req, res, next) => {
-    if (req.method === 'GET') {
-      const key = keyFn(req);
-      const cachedBody = cache.get(key);
-      
-      if (cachedBody) {
-        res.set('X-Cache', 'HIT');
-        return res.send(JSON.parse(cachedBody));
-      } else {
-        res.set('X-Cache', 'MISS');
-        
-        const send = res.send;
-        res.send = (body) => {
-          cache.set(key, JSON.stringify(body), ttlSeconds);
-          send.call(res, body);
-        };
-      }
+    if (req.method !== 'GET') return next();
+
+    const key = keyFn(req);
+    const cached = cache.get(key);
+
+    if (cached && cached.expiresAt > Date.now()) {
+      res.set('X-Cache', 'HIT');
+      return res.json(cached.data);
     }
-    
+
+    res.set('X-Cache', 'MISS');
+    const originalJson = res.json.bind(res);
+    res.json = (body) => {
+      cache.set(key, { data: body, expiresAt: Date.now() + ttlSeconds * 1000 });
+      return originalJson(body);
+    };
+
     next();
   };
 };
 
 export const cacheInvalidate = (keyFn) => {
   return (req, res, next) => {
-    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
       const key = keyFn(req);
-      cache.del(key);
+      cache.delete(key);
     }
-    
     next();
   };
 };
-```

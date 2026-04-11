@@ -1,29 +1,36 @@
-import express from 'express';
-import { Tenant } from '../models/index.js';
+import { supabase } from '../lib/supabase.js';
 
 export async function resolveTenant(req, res, next) {
   const tenantId = req.headers['x-tenant-id'] || req.subdomains[0];
-  
-  if (!tenantId) return res.status(403).send('Missing X-Tenant-ID header or subdomain');
 
-  try {
-    const tenant = await Tenant.findOne({ slug: tenantId });
-    
-    if (!tenant || !tenant.isActive || new Date() > tenant.planExpiry) return res.status(403).send('Tenant not found, inactive or plan expired');
-  
-    req.tenant = tenant;
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send('Internal server error');
+  if (!tenantId) {
+    return res.status(403).json({ error: 'Missing X-Tenant-ID header' });
   }
 
-  next();
+  try {
+    const { data: tenant, error } = await supabase
+      .from('tenants')
+      .select('id, name, is_active, plan_expiry')
+      .eq('id', tenantId)
+      .single();
+
+    if (error || !tenant) return res.status(403).json({ error: 'Tenant not found' });
+    if (!tenant.is_active) return res.status(403).json({ error: 'Tenant account is inactive' });
+    if (tenant.plan_expiry && new Date() > new Date(tenant.plan_expiry)) {
+      return res.status(403).json({ error: 'Tenant plan has expired' });
+    }
+
+    req.tenant = tenant;
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 export function requireTenant() {
-  return async (req, res, next) => {
-    if (!req.tenant) return res.status(403).send('Missing X-Tenant-ID header or subdomain');
-    
+  return (req, res, next) => {
+    if (!req.tenant) return res.status(403).json({ error: 'Tenant context missing' });
     next();
   };
 }

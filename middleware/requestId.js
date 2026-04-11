@@ -1,4 +1,3 @@
-```javascript
 import { randomUUID } from 'crypto';
 
 export default function requestId(req, res, next) {
@@ -7,4 +6,3 @@ export default function requestId(req, res, next) {
   res.set('X-Request-ID', id);
   next();
 }
-```
