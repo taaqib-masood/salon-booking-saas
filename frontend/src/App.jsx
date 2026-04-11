@@ -1,39 +1,24 @@
-import React, { useContext } from 'react';
-import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import BookingFlowPage from './pages/BookingFlowPage';
-import ConfirmationPage from './pages/ConfirmationPage';
-import CustomerDashboardPage from './pages/CustomerDashboardPage';
-import AdminPanelWrapperPage from './pages/AdminPanelWrapperPage';
-import { AuthContext, LanguageContext } from './contexts';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import ServiceBrowser from './pages/ServiceBrowser';
+import BookingFlow from './pages/BookingFlow';
+import BookingConfirmation from './pages/BookingConfirmation';
+import AdminDashboard from './pages/AdminDashboard';
 
 const App = () => {
-  const { authState } = useContext(AuthContext);
-  const { languageState, setLanguageState } = useContext(LanguageContext);
-
   return (
-    <Router>
-      <nav>
-        <button onClick={() => setLanguageState(languageState === 'EN' ? 'AR' : 'EN')}>
-          {languageState}
-        </button>
-        {authState.isAuthenticated ? (
-          <Link to="/logout">Logout</Link>
-        ) : (
-          <Link to="/login">Login</Link>
-        )}
-      </nav>
-      <Switch>
-        <Route exact path="/" component={HomePage} />
-        <Route path="/book" component={BookingFlowPage} />
-        <Route path="/booking/:id" component={ConfirmationPage} />
-        <Route path="/my-bookings" component={CustomerDashboardPage} />
-        <Route path="/admin" component={AdminPanelWrapperPage} />
-      </Switch>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<ServiceBrowser />} />
+          <Route path="/book" element={<BookingFlow />} />
+          <Route path="/booking/:id" element={<BookingConfirmation />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 };
 
 export default App;
-
-Note: This is a simplified version of your code. You need to define the pages and contexts in separate files, handle authentication logic, create context providers, etc. Also, this does not include any styling or UI library like Material-UI or Bootstrap, which you would typically use for a production application.
