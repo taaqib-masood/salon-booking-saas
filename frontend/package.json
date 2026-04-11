@@ -10,7 +10,13 @@
     "recharts": "^2.1.9",
     "@headlessui/react": "^1.6.0",
     "react-datepicker": "^4.8.0",
-    "react-hot-toast": "^2.3.0"
+    "react-hot-toast": "^2.3.0",
+    "@mui/material": "^5.14.0",
+    "@mui/styles": "^5.14.0",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "react-big-calendar": "^1.8.0",
+    "date-fns": "^2.30.0"
   },
   "devDependencies": {
     "vite": "^4.5.0",
