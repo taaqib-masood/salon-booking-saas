@@ -52,5 +52,3 @@ const BookingConfirmation = ({ match }) => {
 };
 
 export default BookingConfirmation;
-
-Please note that this code assumes you have a `IcalLink` component to generate the .ics file and add it to calendar. Also, please replace `new Date(dateTime).toLocaleString()` with your own date formatting logic if needed. The `handleCancel` function will delete the appointment from the database when the Cancel Appointment button is clicked.
