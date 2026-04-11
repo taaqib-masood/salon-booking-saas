@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BarChart, PieChart, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Calendar, momentLocalizer } from 'react-big-calendar'
-import moment from 'moment'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
-
-const localizer = momentLocalizer(moment)
+import { BarChart, Bar, PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
   const [revenueData, setRevenueData] = useState({});
@@ -57,20 +52,12 @@ export default function AdminDashboard() {
       <p>New Customers This Week: {appointmentsData.newCustomersThisWeek}</p>
       <p>Average Rating: {appointmentsData.averageRating}</p>
 
-      <h2>Appointment Calendar View</h2>
-      <Calendar
-        localizer={localizer}
-        events={appointmentsData.calendarEvents}
-        startAccessor="start"
-        endAccessor="end"
-      />
-
       <h2>Revenue Last 30 Days</h2>
       <ResponsiveContainer width="100%" height={400}>
         <BarChart data={revenueData.lastThirtyDaysRevenue} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <Tooltip />
           <Legend />
-          {/* Add your Bar chart components here */}
+          <Bar dataKey="revenue" fill="#8884d8" />
         </BarChart>
       </ResponsiveContainer>
 
