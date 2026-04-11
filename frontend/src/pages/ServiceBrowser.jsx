@@ -23,8 +23,8 @@ function ServiceBrowser() {
 
   const filteredServices = services.filter((service) => {
     return (
-      service.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (!selectedCategory || service.category === selectedCategory)
+      service.name_en.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (!selectedCategory || service.category_id === selectedCategory)
     );
   });
 
@@ -35,7 +35,7 @@ function ServiceBrowser() {
         <option value="">All</option>
         {categories.map((category) => (
           <option key={category.id} value={category.id}>
-            {category.name}
+            {category.name_en}
           </option>
         ))}
       </select>
@@ -46,7 +46,7 @@ function ServiceBrowser() {
         >
           <CardContent>
             <Typography variant="h5" component="h2">
-              {service.name}
+              {service.name_en}
             </Typography>
             <Typography color="text.secondary">
               Price: {service.price} AED
