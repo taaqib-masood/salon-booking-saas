@@ -38,7 +38,7 @@ services:
       - key: VAT_RATE
         value: "0.05"
 
-  - type: static
+  - type: static_site
     name: salon-booking-web
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
