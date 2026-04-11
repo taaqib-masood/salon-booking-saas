@@ -38,14 +38,6 @@ services:
       - key: VAT_RATE
         value: "0.05"
 
-  - type: static_site
-    name: salon-booking-web
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        sync: false
-
   - type: redis
     name: salon-redis
     plan: free
