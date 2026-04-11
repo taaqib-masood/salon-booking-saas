@@ -70,7 +70,12 @@ frontend-demo/.env
 frontend-demo/build/
 frontend-demo/dist/
 
-# Phase specific
+
+# Phase specific — AI generation artifacts, do NOT deploy
 phase*_plan.json
 prompt_*.txt
 minikube-linux-amd64
+nano.env
+
+# Output: legacy MongoDB scaffold — replaced by Supabase migration
+output/

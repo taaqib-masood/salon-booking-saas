@@ -1,69 +1,102 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { stripe, webhookSecret } from '../config/stripe.js';
-import Appointment from '../models/Appointment.js';
-import crypto from 'crypto';
+import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
 
-router.post('/payments/intent', authenticate, async (req, res) => {
+// POST /payments/intent — create Stripe payment intent for an appointment
+router.post('/intent', authenticate, async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.body.appointmentId);
-    
-    if (!appointment) return res.status(404).send({ error: 'Appointment not found' });
-  
+    const { default: Stripe } = await import('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    const { appointmentId } = req.body;
+    const { data: appointment, error } = await supabase
+      .from('appointments')
+      .select('id, total_amount, tenant_id')
+      .eq('id', appointmentId)
+      .eq('tenant_id', req.staff.tenant_id)
+      .single();
+
+    if (error || !appointment) return res.status(404).json({ error: 'Appointment not found' });
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: appointment.price * 100, // Convert to cents
+      amount: Math.round(appointment.total_amount * 100), // AED to fils
       currency: 'aed',
-      metadata: { integration_check: 'accept_a_payment' },
+      metadata: { appointment_id: appointmentId, tenant_id: appointment.tenant_id },
     });
-  
-    res.send({ clientSecret: paymentIntent.client_secret });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({ error: 'Failed to create Payment Intent' });
-  }
-});
 
-router.post('/payments/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  
-  let event;
-  
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    // Store payment intent id on the appointment
+    await supabase
+      .from('appointments')
+      .update({ stripe_payment_id: paymentIntent.id })
+      .eq('id', appointmentId);
+
+    res.json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
-    res.status(400).send({ error: `Webhook Error: ${err.message}` });
-    return;
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create Payment Intent' });
   }
-  
-  if (event.type === 'payment_intent.succeeded') {
-    const appointment = await Appointment.findOneAndUpdate(
-      { stripePaymentId: event.data.object.id },
-      { paymentStatus: 'paid' },
-      { new: true }
-    );
-    
-    if (!appointment) return res.status(404).send({ error: 'Appointment not found' });
-  }
-  
-  res.json({ received: true });
 });
 
-router.post('/payments/refund', authenticate, async (req, res) => {
+// POST /payments/webhook — Stripe webhook handler
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.body.appointmentId);
-    
-    if (!appointment) return res.status(404).send({ error: 'Appointment not found' });
-  
-    const refund = await stripe.refunds.create({
-      charge: appointment.stripePaymentId,
-    });
-  
-    res.send({ refund });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({ error: 'Failed to create Refund' });
+    const { default: Stripe } = await import('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    } catch (err) {
+      return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+    }
+
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntentId = event.data.object.id;
+      await supabase
+        .from('appointments')
+        .update({ payment_status: 'paid' })
+        .eq('stripe_payment_id', paymentIntentId);
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Webhook handling failed' });
+  }
+});
+
+// POST /payments/refund
+router.post('/refund', authenticate, async (req, res) => {
+  try {
+    const { default: Stripe } = await import('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    const { appointmentId } = req.body;
+    const { data: appointment, error } = await supabase
+      .from('appointments')
+      .select('stripe_payment_id, tenant_id')
+      .eq('id', appointmentId)
+      .eq('tenant_id', req.staff.tenant_id)
+      .single();
+
+    if (error || !appointment) return res.status(404).json({ error: 'Appointment not found' });
+    if (!appointment.stripe_payment_id) return res.status(400).json({ error: 'No payment on record' });
+
+    const refund = await stripe.refunds.create({ payment_intent: appointment.stripe_payment_id });
+
+    await supabase
+      .from('appointments')
+      .update({ payment_status: 'refunded' })
+      .eq('id', appointmentId);
+
+    res.json({ refund });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create Refund' });
   }
 });
 

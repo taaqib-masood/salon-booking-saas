@@ -1,64 +1,90 @@
 import express from 'express';
+import { supabase } from '../lib/supabase.js';
+import { authenticate, authorize } from '../middleware/auth.js';
+
 const router = express.Router();
 
-// Import the category service
-import * as categoryService from '../services/categoryService.js';
-
-// GET /categories (public)
+// GET /categories — public, list all for a tenant
 router.get('/', async (req, res) => {
   try {
-    const categories = await categoryService.findAll();
-    res.json(categories);
+    // tenant_id from header for public endpoints
+    const tenant_id = req.headers['x-tenant-id'];
+    let query = supabase.from('service_categories').select('id, name_en, name_ar, icon');
+    if (tenant_id) query = query.eq('tenant_id', tenant_id);
+
+    const { data, error } = await query.order('name_en');
+    if (error) return res.status(400).json({ error: error.message });
+    res.json(data);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: err.message });
   }
 });
 
 // GET /categories/:id
 router.get('/:id', async (req, res) => {
   try {
-    const category = await categoryService.findById(req.params.id);
-    if (!category) return res.status(404).json({ msg: 'Category not found' });
-    res.json(category);
+    const { data, error } = await supabase
+      .from('service_categories')
+      .select('id, name_en, name_ar, icon')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Category not found' });
+    res.json(data);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: err.message });
   }
 });
 
-// POST /categories (admin)
-router.post('/', async (req, res) => {
+// POST /categories — admin only
+router.post('/', authenticate, authorize('owner', 'admin'), async (req, res) => {
   try {
-    const newCategory = await categoryService.create(req.body);
-    res.json(newCategory);
+    const { name_en, name_ar, icon } = req.body;
+    const { data, error } = await supabase
+      .from('service_categories')
+      .insert({ tenant_id: req.staff.tenant_id, name_en, name_ar, icon })
+      .select()
+      .single();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json(data);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: err.message });
   }
 });
 
-// PUT /categories/:id (admin)
-router.put('/:id', async (req, res) => {
+// PUT /categories/:id — admin only
+router.put('/:id', authenticate, authorize('owner', 'admin'), async (req, res) => {
   try {
-    const updatedCategory = await categoryService.update(req.params.id, req.body);
-    if (!updatedCategory) return res.status(404).json({ msg: 'Category not found' });
-    res.json(updatedCategory);
+    const { name_en, name_ar, icon } = req.body;
+    const { data, error } = await supabase
+      .from('service_categories')
+      .update({ name_en, name_ar, icon })
+      .eq('id', req.params.id)
+      .eq('tenant_id', req.staff.tenant_id)
+      .select()
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Category not found' });
+    res.json(data);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE /categories/:id (admin)
-router.delete('/:id', async (req, res) => {
+// DELETE /categories/:id — admin only
+router.delete('/:id', authenticate, authorize('owner', 'admin'), async (req, res) => {
   try {
-    const category = await categoryService.remove(req.params.id);
-    if (!category) return res.status(404).json({ msg: 'Category not found' });
-    res.json({ msg: 'Category removed' });
+    const { error } = await supabase
+      .from('service_categories')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('tenant_id', req.staff.tenant_id);
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ message: 'Category deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: err.message });
   }
 });
 

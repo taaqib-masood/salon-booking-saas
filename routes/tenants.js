@@ -1,115 +1,72 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import Tenant from '../models/Tenant.js';
-import TenantSubscription from '../models/TenantSubscription.js';
+import { supabase } from '../lib/supabase.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/register', async (req, res) => {
-  const hashedPassword = await bcrypt.hash(req.body.password, 10);
-  
+// GET /tenants/me — current tenant info
+router.get('/me', authenticate, async (req, res) => {
   try {
-    let tenant = new Tenant({
-      name: req.body.name,
-      email: req.body.email,
-      password: hashedPassword,
-    });
-    
-    await tenant.save();
-    
-    const today = new Date();
-    const freeTrialEndsAt = new Date(today.getFullYear(), today.getMonth() + 2, today.getDate());
-  
-    let subscription = new TenantSubscription({
-      tenant: tenant._id,
-      plan: 'free',
-      startsAt: today,
-      endsAt: freeTrialEndsAt,
-    });
-    
-    await subscription.save();
-    
-    res.send({ message: 'Tenant created' });
-  } catch (error) {
-    res.status(500).send(error);
+    const { data: tenant, error } = await supabase
+      .from('tenants')
+      .select('id, name, email, phone, is_active, created_at')
+      .eq('id', req.staff.tenant_id)
+      .single();
+
+    if (error || !tenant) return res.status(404).json({ error: 'Tenant not found' });
+
+    const { data: subscription } = await supabase
+      .from('tenant_subscriptions')
+      .select('plan, status, starts_at, ends_at')
+      .eq('tenant_id', req.staff.tenant_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    res.json({ tenant, subscription: subscription || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-router.post('/login', async (req, res) => {
+// PUT /tenants/me/settings — update tenant settings
+router.put('/me/settings', authenticate, authorize('owner', 'admin'), async (req, res) => {
   try {
-    let tenant = await Tenant.findOne({ email: req.body.email });
-    
-    if (!tenant) return res.status(400).send('Email or password is wrong');
-  
-    const validPassword = await bcrypt.compare(req.body.password, tenant.password);
-    
-    if (!validPassword) return res.status(400).send('Email or password is wrong');
-  
-    const token = jwt.sign({ _id: tenant._id }, process.env.TOKEN_SECRET);
-    
-    res.header('auth-token', token).send(token);
-  } catch (error) {
-    res.status(500).send(error);
+    const { name, phone, settings } = req.body;
+    const update = {};
+    if (name) update.name = name;
+    if (phone) update.phone = phone;
+    if (settings) update.settings = settings;
+
+    const { data, error } = await supabase
+      .from('tenants')
+      .update(update)
+      .eq('id', req.staff.tenant_id)
+      .select()
+      .single();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ message: 'Settings updated', tenant: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-router.get('/me', verifyToken, async (req, res) => {
+// GET /tenants/me/usage — usage stats for this tenant
+router.get('/me/usage', authenticate, async (req, res) => {
   try {
-    let tenant = await Tenant.findById(req.tenant._id);
-    
-    if (!tenant) return res.status(401).send('Access Denied');
-  
-    res.json({
-      name: tenant.name,
-      email: tenant.email,
-      subscription: await TenantSubscription.findOne({ tenant: tenant._id }),
-    });
-  } catch (error) {
-    res.status(500).send(error);
+    const tenant_id = req.staff.tenant_id;
+
+    const [{ count: branches }, { count: staff }, { count: bookings }] = await Promise.all([
+      supabase.from('branches').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant_id),
+      supabase.from('staff').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant_id).eq('is_deleted', false),
+      supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant_id),
+    ]);
+
+    res.json({ branches: branches || 0, staff: staff || 0, bookings: bookings || 0 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
-
-router.put('/me/settings', verifyToken, async (req, res) => {
-  try {
-    let tenant = await Tenant.findByIdAndUpdate(req.tenant._id, req.body, { new: true });
-    
-    if (!tenant) return res.status(401).send('Access Denied');
-  
-    res.json({ message: 'Settings updated' });
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
-router.get('/me/usage', verifyToken, async (req, res) => {
-  try {
-    let tenant = await Tenant.findById(req.tenant._id);
-    
-    if (!tenant) return res.status(401).send('Access Denied');
-  
-    // TODO: Implement usage calculation logic here
-  
-    res.json({ branches: 0, staff: 0, bookings: 0 });
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
-function verifyToken(req, res, next) {
-  const token = req.header('auth-token');
-  
-  if (!token) return res.status(401).send('Access Denied');
-  
-  try {
-    const verified = jwt.verify(token, process.env.TOKEN_SECRET);
-    
-    req.tenant = verified;
-    
-    next();
-  } catch (error) {
-    res.status(400).send('Invalid Token');
-  }
-}
 
 export default router;

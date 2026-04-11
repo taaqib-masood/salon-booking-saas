@@ -1,21 +1,14 @@
-```javascript
 import express from 'express';
+import { createReport, getReports, getReportById, updateReportStatus } from '../controllers/reports.js';
+import { authenticate, authorize } from '../middleware/auth.js';
+
 const router = express.Router();
 
-// Import your controllers here
-import { createReportController, listReportsController, getReportStatusController, downloadReportController, deleteReportController, scheduleAutoEmailsController } from '../controllers/reports.js';
+router.use(authenticate);
 
-router.post('/', createReportController);
-
-router.get('/', listReportsController);
-
-router.get('/:id', getReportStatusController);
-
-router.get('/:id/download', downloadReportController);
-
-router.delete('/:id', deleteReportController);
-
-router.post('/schedule', scheduleAutoEmailsController);
+router.post('/',    authorize('owner', 'admin', 'manager'), createReport);
+router.get('/',     getReports);
+router.get('/:id',  getReportById);
+router.patch('/:id/status', authorize('owner', 'admin'), updateReportStatus);
 
 export default router;
-```
