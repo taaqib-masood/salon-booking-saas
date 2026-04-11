@@ -12,7 +12,14 @@ const app = express();
 
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://salon-booking-saas-frontend.onrender.com',
+    /\.onrender\.com$/,
+    'http://localhost:5173',
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 
