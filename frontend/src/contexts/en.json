@@ -1,0 +1,14 @@
+{
+  "services": "Services",
+  "book": "Book",
+  "admin": "Admin",
+  "search": "Search services...",
+  "reserve": "Reserve",
+  "all": "All",
+  "minutes": "min",
+  "loading": "Loading...",
+  "noServices": "No services found",
+  "hero_label": "Luxury Experience · Dubai",
+  "hero_title": "Reserve Your Experience",
+  "hero_sub": "Premium salon services in the heart of Dubai"
+}
