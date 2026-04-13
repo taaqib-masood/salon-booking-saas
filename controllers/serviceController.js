@@ -1,53 +1,44 @@
 import { supabase } from '../lib/supabase.js';
 
 export async function getServices(req, res) {
-  try {
-    const tenant_id = req.staff?.tenant_id || req.headers['x-tenant-id'];
-    const { branch_id, category_id, active } = req.query;
+  const tenant_id = req.staff.tenant_id;
+  const { branch_id, category_id, active } = req.query;
 
-    let query = supabase
-      .from('services')
-      .select('*, service_categories(name_en,name_ar,icon)')
-      .eq('is_deleted', false);
+  let query = supabase
+    .from('services')
+    .select('*, service_categories(name_en,name_ar,icon)')
+    .eq('tenant_id', tenant_id)
+    .eq('is_deleted', false);
 
-    if (tenant_id) query = query.eq('tenant_id', tenant_id);
-    if (active !== 'false') query = query.eq('is_active', true);
-    if (category_id) query = query.eq('category_id', category_id);
+  if (active !== 'false') query = query.eq('is_active', true);
+  if (category_id) query = query.eq('category_id', category_id);
 
-    if (branch_id) {
-      const { data: svcIds } = await supabase
-        .from('service_branches')
-        .select('service_id')
-        .eq('branch_id', branch_id);
-      const ids = (svcIds || []).map(r => r.service_id);
-      if (!ids.length) return res.json([]);
-      query = query.in('id', ids);
-    }
-
-    const { data, error } = await query.order('name_en');
-    if (error) return res.status(400).json({ error: error.message });
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  if (branch_id) {
+    const { data: svcIds } = await supabase
+      .from('service_branches')
+      .select('service_id')
+      .eq('branch_id', branch_id);
+    const ids = (svcIds || []).map(r => r.service_id);
+    if (!ids.length) return res.json([]);
+    query = query.in('id', ids);
   }
+
+  const { data, error } = await query.order('name_en');
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
 }
 
 export async function getServiceById(req, res) {
-  try {
-    let query = supabase
-      .from('services')
-      .select('*, service_categories(name_en,name_ar)')
-      .eq('id', req.params.id)
-      .eq('is_deleted', false);
+  const { data, error } = await supabase
+    .from('services')
+    .select('*, service_categories(name_en,name_ar)')
+    .eq('id', req.params.id)
+    .eq('tenant_id', req.staff.tenant_id)
+    .eq('is_deleted', false)
+    .single();
 
-    if (req.staff?.tenant_id) query = query.eq('tenant_id', req.staff.tenant_id);
-
-    const { data, error } = await query.single();
-    if (error || !data) return res.status(404).json({ error: 'Service not found' });
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  if (error || !data) return res.status(404).json({ error: 'Service not found' });
+  res.json(data);
 }
 
 export async function createService(req, res) {
