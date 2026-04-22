@@ -1,51 +1,56 @@
-import Redis from 'ioredis';
-import dotenv from 'dotenv';
+import IORedis from 'ioredis';
 
-dotenv.config();
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const isSecure  = REDIS_URL.startsWith('rediss://');
 
-const { REDIS_URL } = process.env;
+// ── BullMQ connection ─────────────────────────────────────────────────────────
+// BullMQ requires maxRetriesPerRequest: null and enableReadyCheck: false
+export const bullConnection = new IORedis(REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck:     false,
+  tls: isSecure ? {} : undefined,
+  retryStrategy: (times) => Math.min(times * 500, 10000),
+});
 
-class RedisClient {
-  constructor() {
-    this.redis = new Redis(REDIS_URL || 'redis://localhost:6379', {
-      retryStrategy: (times) => Math.min(times * 50, 2000),
-      lazyConnect: true,
-    });
+bullConnection.on('connect',  () => console.log('[Redis] BullMQ connection established'));
+bullConnection.on('error',    (err) => console.warn('[Redis] BullMQ error (non-fatal):', err.message));
 
-    this.redis.on('error', (err) => {
-      console.warn('Redis connection error (non-fatal):', err.message);
-    });
-  }
+// ── Cache connection ──────────────────────────────────────────────────────────
+// Separate client for get/set caching — uses lazyConnect so it won't fail boot
+const cacheClient = new IORedis(REDIS_URL, {
+  lazyConnect: true,
+  tls: isSecure ? {} : undefined,
+  retryStrategy: (times) => Math.min(times * 50, 2000),
+});
 
+cacheClient.on('error', (err) => console.warn('[Redis] Cache error (non-fatal):', err.message));
+
+class RedisCache {
   async get(key) {
     try {
-      const value = await this.redis.get(key);
-      return JSON.parse(value);
-    } catch {
-      return null;
-    }
+      const value = await cacheClient.get(key);
+      return value ? JSON.parse(value) : null;
+    } catch { return null; }
   }
 
   set(key, value, ttl = 3600) {
     try {
-      const strValue = JSON.stringify(value);
-      return this.redis.set(key, strValue, 'EX', ttl);
-    } catch {
-      return null;
-    }
+      return cacheClient.set(key, JSON.stringify(value), 'EX', ttl);
+    } catch { return null; }
   }
 
   del(key) {
-    return this.redis.del(key);
+    return cacheClient.del(key);
   }
 
   async invalidatePattern(pattern) {
-    const keys = await this.redis.keys(`cache:${pattern}`);
-    const pipeline = this.redis.pipeline();
-    keys.forEach((key) => {
-      pipeline.del(key);
-    });
-    return pipeline.exec();
+    try {
+      const keys = await cacheClient.keys(`cache:${pattern}`);
+      if (!keys.length) return;
+      const pipeline = cacheClient.pipeline();
+      keys.forEach((key) => pipeline.del(key));
+      return pipeline.exec();
+    } catch { return null; }
   }
 
   async withCache({ key, ttl }, callback) {
@@ -56,6 +61,15 @@ class RedisClient {
     }
     return value;
   }
+
+  // Health check — used by server.js on startup
+  async ping() {
+    try {
+      await cacheClient.connect().catch(() => {});
+      const result = await cacheClient.ping();
+      return result === 'PONG';
+    } catch { return false; }
+  }
 }
 
-export default new RedisClient();
+export default new RedisCache();

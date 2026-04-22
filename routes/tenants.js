@@ -4,12 +4,35 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// GET /tenants/:id/public — public-facing info (no auth required)
+router.get('/:id/public', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('tenants')
+      .select('name, settings')
+      .eq('id', req.params.id)
+      .single();
+    if (error || !data) return res.status(404).json({ error: 'Not found' });
+    const s = data.settings || {};
+    res.json({
+      salonName:          data.name,
+      salonAddress:       s.salonAddress       || '',
+      salonPhone:         s.salonPhone         || '',
+      logoUrl:            s.logoUrl            || '',
+      cancellationPolicy: s.cancellationPolicy || '',
+      workingHours:       s.workingHours       || null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /tenants/me — current tenant info
 router.get('/me', authenticate, async (req, res) => {
   try {
     const { data: tenant, error } = await supabase
       .from('tenants')
-      .select('id, name, email, phone, is_active, created_at')
+      .select('id, name, owner_email, owner_phone, is_active, plan, plan_expires_at, created_at, settings')
       .eq('id', req.staff.tenant_id)
       .single();
 
@@ -36,7 +59,15 @@ router.put('/me/settings', authenticate, authorize('owner', 'admin'), async (req
     const update = {};
     if (name) update.name = name;
     if (phone) update.phone = phone;
-    if (settings) update.settings = settings;
+    if (settings) {
+      // Merge into existing settings instead of overwriting — preserves vatRate, currency, etc.
+      const { data: current } = await supabase
+        .from('tenants')
+        .select('settings')
+        .eq('id', req.staff.tenant_id)
+        .single();
+      update.settings = { ...(current?.settings || {}), ...settings };
+    }
 
     const { data, error } = await supabase
       .from('tenants')

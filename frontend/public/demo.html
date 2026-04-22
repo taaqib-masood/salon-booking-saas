@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fake Salon Website (Widget Demo)</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: #fafafa; color: #333; }
+    header { background: #333; color: #fff; padding: 40px; text-align: center; }
+    h1 { margin: 0; font-size: 36px; }
+    .content { padding: 40px; max-width: 800px; margin: 0 auto; line-height: 1.6; }
+    .hero-image { width: 100%; height: 400px; background: url('https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1200') center/cover; margin-bottom: 30px; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to The Vintage Barber</h1>
+    <p>A completely different website using our booking widget!</p>
+  </header>
+  <div class="content">
+    <div class="hero-image"></div>
+    <h2>Our Story</h2>
+    <p>We are a third-party salon. We don't use your SaaS frontend, we only use your booking engine.</p>
+    <p>Look at the bottom right of the screen. You should see a "Reserve Now" button injected by your `widget.js` script!</p>
+    <br><br><br><br><br><br>
+  </div>
+
+  <!-- THE DROP-IN WIDGET SCRIPT -->
+  <script src="/widget.js" data-tenant="vintage-barber" data-host="http://localhost:5173"></script>
+</body>
+</html>

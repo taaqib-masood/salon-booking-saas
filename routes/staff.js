@@ -6,10 +6,14 @@ import {
   updateStaff,
   deleteStaff,
   getStaffSchedule,
+  getPublicStaff,
 } from '../controllers/staffController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Public — no auth required
+router.get('/public', getPublicStaff);
 
 router.use(authenticate);
 

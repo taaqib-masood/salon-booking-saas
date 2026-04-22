@@ -1,14 +1,23 @@
 import { supabase } from '../lib/supabase.js';
 
+function buildImageUrl(service) {
+  if (service.image_slug && process.env.CLOUDINARY_CLOUD_NAME) {
+    return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/w_800,q_auto,f_auto/salon-services/${service.image_slug}`;
+  }
+  return service.image_url || null;
+}
+
 export async function getServices(req, res) {
-  const tenant_id = req.staff.tenant_id;
+  // Try staff tenant ID first, fallback to public header
+  const tenant_id = req.staff?.tenant_id || req.headers['x-tenant-id'];
   const { branch_id, category_id, active } = req.query;
 
   let query = supabase
     .from('services')
     .select('*, service_categories(name_en,name_ar,icon)')
-    .eq('tenant_id', tenant_id)
     .eq('is_deleted', false);
+
+  if (tenant_id) query = query.eq('tenant_id', tenant_id);
 
   if (active !== 'false') query = query.eq('is_active', true);
   if (category_id) query = query.eq('category_id', category_id);
@@ -25,17 +34,23 @@ export async function getServices(req, res) {
 
   const { data, error } = await query.order('name_en');
   if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
+  res.json(data.map(s => ({ ...s, image_url: buildImageUrl(s) })));
 }
 
 export async function getServiceById(req, res) {
-  const { data, error } = await supabase
+  const tenant_id = req.staff?.tenant_id || req.headers['x-tenant-id'];
+  
+  let query = supabase
     .from('services')
     .select('*, service_categories(name_en,name_ar)')
     .eq('id', req.params.id)
-    .eq('tenant_id', req.staff.tenant_id)
-    .eq('is_deleted', false)
-    .single();
+    .eq('is_deleted', false);
+    
+  if (tenant_id) {
+    query = query.eq('tenant_id', tenant_id);
+  }
+
+  const { data, error } = await query.single();
 
   if (error || !data) return res.status(404).json({ error: 'Service not found' });
   res.json(data);

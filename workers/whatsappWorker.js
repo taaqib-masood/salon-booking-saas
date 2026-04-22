@@ -1,51 +1,86 @@
-```javascript
-import Queue from 'bull';
-import { setQueues } from 'bull-board';
-import { sendConfirmation, sendReminder, sendCancellation } from '../utils/whatsapp.js';
-import NotificationModel from '../models/Notification.js';
-import mongoose from 'mongoose';
+import { Worker } from 'bullmq';
+import { bullConnection } from '../utils/redis.js';
+import { deadLetterQueue } from '../utils/queue.js';
+import { sendBookingConfirmation, sendReminder, sendCancellation } from '../utils/whatsapp.js';
+import { supabase } from '../lib/supabase.js';
+import { createLogger, maskPhone } from '../utils/logger.js';
 
-const whatsappQueue = new Queue('WhatsApp', {
-  redis: process.env.REDIS_URL,
+const log = createLogger('WhatsAppWorker');
+
+const worker = new Worker('whatsapp', async (job) => {
+  const { notificationId, phoneNumber, message } = job.data;
+  const attempt = job.attemptsMade + 1;
+
+  log.info('Processing job', {
+    jobName:        job.name,
+    jobId:          job.id,
+    attempt,
+    maxAttempts:    job.opts.attempts,
+    phone:          maskPhone(phoneNumber),
+    notificationId,
+  });
+
+  switch (job.name) {
+    case 'send_confirmation':
+      await sendBookingConfirmation(phoneNumber, message);
+      break;
+    case 'send_reminder':
+      await sendReminder(phoneNumber, message);
+      break;
+    case 'send_cancellation':
+      await sendCancellation(phoneNumber, message);
+      break;
+    default:
+      throw new Error(`Unknown job type: ${job.name}`);
+  }
+
+  if (notificationId) {
+    await supabase
+      .from('notifications')
+      .update({ status: 'sent', sent_at: new Date().toISOString() })
+      .eq('id', notificationId);
+  }
+}, {
+  connection: bullConnection,
+  concurrency: 3,
 });
-setQueues([whatsappQueue]);
 
-whatsappQueue.process(3, async (job) => {
-  const notificationId = job.data.notificationId;
-  let result;
-  
-  try {
-    mongoose.connect(process.env.MONGO_URL);
-    
-    switch (job.name) {
-      case 'send_confirmation':
-        result = await sendConfirmation(job.data.phoneNumber, job.data.message);
-        break;
-      case 'send_reminder':
-        result = await sendReminder(job.data.phoneNumber, job.data.message);
-        break;
-      case 'send_cancellation':
-        result = await sendCancellation(job.data.phoneNumber, job.data.message);
-        break;
-    }
-    
-    if (result) {
-      const notification = await NotificationModel.findByIdAndUpdate(notificationId, { status: 'sent' }, { new: true });
-      
-      if (!notification) throw new Error('Notification not found');
-      
-      return result;
-    } else {
-      throw new Error('Failed to send WhatsApp message');
-    }
-  } catch (error) {
-    console.log(`Error processing job ${job.id}: ${error}`);
-    
-    const notification = await NotificationModel.findByIdAndUpdate(notificationId, { status: 'failed' }, { new: true });
-    
-    if (!notification) throw error;
-  } finally {
-    mongoose.connection.close();
+worker.on('completed', (job) => {
+  log.info('Job completed', { jobName: job.name, jobId: job.id });
+});
+
+worker.on('failed', async (job, err) => {
+  const isFinal = job.attemptsMade >= job.opts.attempts;
+
+  log.error('Job failed', {
+    jobName:     job.name,
+    jobId:       job.id,
+    attempt:     job.attemptsMade,
+    maxAttempts: job.opts.attempts,
+    isFinal,
+    error:       err.message,
+    phone:       maskPhone(job.data?.phoneNumber),
+  });
+
+  if (job.data.notificationId) {
+    await supabase
+      .from('notifications')
+      .update({ status: isFinal ? 'failed' : 'retrying', error_message: err.message })
+      .eq('id', job.data.notificationId)
+      .catch(() => {});
+  }
+
+  if (isFinal) {
+    await deadLetterQueue.add('whatsapp-dlq', {
+      originalQueue: 'whatsapp',
+      jobName:       job.name,
+      jobData:       job.data,
+      error:         err.message,
+      failedAt:      new Date().toISOString(),
+    }).catch((e) => log.error('Failed to enqueue DLQ job', { error: e.message }));
   }
 });
-```
+
+log.info('Worker started — listening on Redis');
+
+export default worker;

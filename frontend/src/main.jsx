@@ -1,10 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
-import i18nConfig from './i18n.config';
-import './global.css';
+import './index.css';
+import './global.css'; 
+import { AuthProvider, LangProvider } from './contexts';
 
-ReactDOM.render(<App />, document.getElementById('root'));
-
-// Set document direction based on current language
-document.dir = i18nConfig.language === 'ar' ? 'rtl' : 'ltr';
+ReactDOM.render(
+  <AuthProvider>
+    <LangProvider>
+      <App />
+    </LangProvider>
+  </AuthProvider>,
+  document.getElementById('root')
+);
