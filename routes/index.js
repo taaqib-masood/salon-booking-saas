@@ -21,13 +21,20 @@ import posRouter from './pos.js';
 import webhooksRouter from './webhooks.js';
 import subscriptionsRouter from './subscriptions.js';
 import gdprRouter from './gdpr.js';
+import privacyRouter from './privacy.js';
 import categoriesRouter from './categories.js';
+import twilioRouter from './twilio.js';
+import calendarRouter from './calendar.js';
+import availabilityRouter from './availability.js';
+import staffSchedulesRouter from './staffSchedules.js';
+import staffBreaksRouter from './staffBreaks.js';
 
 const router = express.Router();
 
 // Public
 router.use('/auth', authRouter);
 router.use('/', healthRouter);
+router.use('/twilio', twilioRouter);
 
 // Core operations
 router.use('/branches', branchesRouter);
@@ -36,6 +43,10 @@ router.use('/services', servicesRouter);
 router.use('/categories', categoriesRouter);
 router.use('/appointments', appointmentsRouter);
 router.use('/customers', customersRouter);
+router.use('/calendar', calendarRouter);
+router.use('/availability', availabilityRouter);
+router.use('/staff-schedules', staffSchedulesRouter);
+router.use('/staff-breaks', staffBreaksRouter);
 
 // Business features
 router.use('/offers', offersRouter);
@@ -56,5 +67,6 @@ router.use('/tenants', tenantsRouter);
 router.use('/webhooks', webhooksRouter);
 router.use('/metrics', metricsRouter);
 router.use('/gdpr', gdprRouter);
+router.use('/privacy', privacyRouter);
 
 export default router;

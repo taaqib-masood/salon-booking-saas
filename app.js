@@ -1,20 +1,25 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import routes from './routes/index.js';
+import logger from './utils/logger.js';
+import { requestId, httpLogger } from './middleware/logging.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
+app.use(express.urlencoded({ extended: true }));
+app.use(requestId);   // attach req.requestId before logging
+app.use(httpLogger);  // structured HTTP logs → logs/combined-*.log
 
 // Rate limiting
 const limiter = rateLimit({
@@ -43,9 +48,16 @@ app.use((req, res, next) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error',
-  });
+  const status = err.status || 500;
+  if (status >= 500) {
+    logger.error('Unhandled error', {
+      requestId: req.requestId,
+      status,
+      error: err.message,
+      stack: err.stack,
+    });
+  }
+  res.status(status).json({ error: err.message || 'Internal Server Error' });
 });
 
 export default app;

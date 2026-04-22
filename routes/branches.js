@@ -4,9 +4,9 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', getBranches);
-router.get('/:id', getBranchById);
-router.get('/:id/availability', checkAvailability);
+router.get('/', authenticate, getBranches);
+router.get('/:id', authenticate, getBranchById);
+router.get('/:id/availability', authenticate, checkAvailability);
 router.post('/', authenticate, authorize('owner', 'admin'), createBranch);
 router.put('/:id', authenticate, authorize('owner', 'admin', 'manager'), updateBranch);
 router.delete('/:id', authenticate, authorize('owner', 'admin'), deleteBranch);

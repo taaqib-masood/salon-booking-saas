@@ -1,4 +1,5 @@
 import express from 'express';
+import { DEFAULT_TENANT_ID } from '../lib/defaults.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../lib/supabase.js';
@@ -42,10 +43,18 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'business_name, email, password, name required' });
   }
 
-  // Create tenant
+  const slug = business_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36);
+
   const { data: tenant, error: tenantErr } = await supabase
     .from('tenants')
-    .insert({ name: business_name, email, phone, is_active: true })
+    .insert({
+      name: business_name,
+      slug,
+      owner_email: email,
+      owner_name: name,
+      owner_phone: phone || null,
+      is_active: true
+    })
     .select()
     .single();
 
@@ -55,7 +64,7 @@ router.post('/register', async (req, res) => {
 
   const { data: staff, error: staffErr } = await supabase
     .from('staff')
-    .insert({ tenant_id: tenant.id, name, email: email.toLowerCase(), password_hash, role: 'owner' })
+    .insert({ tenant_id: tenant.id, name, email: email.toLowerCase(), password_hash, role: 'admin' })
     .select('id, name, email, role, tenant_id')
     .single();
 
@@ -68,6 +77,35 @@ router.post('/register', async (req, res) => {
   );
 
   res.status(201).json({ token, tenant, staff });
+});
+
+// Customer register (self-service)
+router.post('/customer/register', async (req, res) => {
+  const { name, phone, email, password } = req.body;
+  if (!name || !phone || !email || !password) {
+    return res.status(400).json({ error: 'name, phone, email, and password are required' });
+  }
+
+  // Use the La Maison tenant by default for public sign-ups
+  const TENANT_ID = DEFAULT_TENANT_ID;
+
+  const password_hash = await bcrypt.hash(password, 10);
+
+  const { data: customer, error } = await supabase
+    .from('customers')
+    .insert({ tenant_id: TENANT_ID, name, phone, email: email.toLowerCase(), password_hash })
+    .select('id, name, phone, email, tenant_id')
+    .single();
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  const token = jwt.sign(
+    { id: customer.id, tenant_id: customer.tenant_id, type: 'customer' },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+
+  res.status(201).json({ token, customer });
 });
 
 // Customer login by phone

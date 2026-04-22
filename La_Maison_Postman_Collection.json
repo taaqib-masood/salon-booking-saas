@@ -1,0 +1,709 @@
+{
+  "info": {
+    "name": "La Maison Salon — Full Demo",
+    "_postman_id": "la-maison-salon-demo",
+    "description": "Full API verification collection for La Maison Salon Booking SaaS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000/api/v1" },
+    { "key": "token", "value": "" },
+    { "key": "tenant_id", "value": "5103813d-5a3b-4ebd-88f3-d1277e600a06" },
+    { "key": "branch_id", "value": "c823e802-a40d-45e4-a69b-6a9aaf4b59a7" },
+    { "key": "service_id", "value": "" },
+    { "key": "staff_id", "value": "" },
+    { "key": "appointment_id", "value": "" },
+    { "key": "customer_id", "value": "" },
+    { "key": "offer_id", "value": "" },
+    { "key": "package_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health"
+          }
+        },
+        {
+          "name": "Readiness Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ready"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Auth",
+      "item": [
+        {
+          "name": "Staff Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.collectionVariables.set('token', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/staff/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@lamaison.ae\",\n  \"password\": \"yourpassword\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Staff Register",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@lamaison.ae\",\n  \"password\": \"yourpassword\",\n  \"role\": \"admin\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Customer Register",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/customer/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sarah Ahmed\",\n  \"email\": \"sarah@example.com\",\n  \"phone\": \"+971501234567\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Customer Login",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/customer/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sarah@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Services",
+      "item": [
+        {
+          "name": "Get All Services",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json[0]?.id) pm.collectionVariables.set('service_id', json[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/services",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Create Service",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/services",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name_en\": \"Royal Caviar Facial\",\n  \"name_ar\": \"فيشل الكافيار الملكي\",\n  \"price\": 500,\n  \"duration\": 60,\n  \"description\": \"Luxurious anti-aging facial using pure caviar extract\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Service by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/services/{{service_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Update Service",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/services/{{service_id}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 550\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Staff",
+      "item": [
+        {
+          "name": "Get All Staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json[0]?.id) pm.collectionVariables.set('staff_id', json[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/staff",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Create Staff",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/staff",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amira Hassan\",\n  \"role\": \"stylist\",\n  \"email\": \"amira@lamaison.ae\",\n  \"phone\": \"+971501111111\",\n  \"branch_id\": \"{{branch_id}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Staff Schedule",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/staff/{{staff_id}}/schedule",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Appointments",
+      "item": [
+        {
+          "name": "Public Book (Guest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('appointment_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/appointments/book",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": \"{{service_id}}\",\n  \"date\": \"2026-04-25\",\n  \"time_slot\": \"14:00\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Customer\",\n  \"phone\": \"+971501234567\",\n  \"email\": \"test@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Appointments",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/appointments",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Appointment by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/appointments/{{appointment_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/appointments/{{appointment_id}}/status",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reschedule Appointment",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/appointments/{{appointment_id}}/reschedule",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-04-26\",\n  \"time_slot\": \"15:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Cancel Appointment",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/appointments/{{appointment_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Customers",
+      "item": [
+        {
+          "name": "Get All Customers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data?.[0]?.id) pm.collectionVariables.set('customer_id', json.data[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/customers",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/customers/{{customer_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Customer Appointments",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/customers/{{customer_id}}/appointments",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Customer Loyalty Balance",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/customers/{{customer_id}}/loyalty",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Loyalty",
+      "item": [
+        {
+          "name": "Get Balance",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/loyalty/balance",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Transactions",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/loyalty/transactions",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Redeem Points",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/loyalty/redeem",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"points\": 100,\n  \"appointment_id\": \"{{appointment_id}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Offers",
+      "item": [
+        {
+          "name": "Get All Offers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json[0]?.id) pm.collectionVariables.set('offer_id', json[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/offers",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Create Offer",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/offers",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SAVE10\",\n  \"discount_type\": \"percentage\",\n  \"discount_value\": 10,\n  \"expires_at\": \"2026-12-31\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Validate Offer Code",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/offers/validate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SAVE10\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Packages",
+      "item": [
+        {
+          "name": "Get All Packages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json[0]?.id) pm.collectionVariables.set('package_id', json[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/packages",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Create Package",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/packages",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Facial Bundle\",\n  \"service_id\": \"{{service_id}}\",\n  \"sessions\": 5,\n  \"price\": 2000,\n  \"expires_days\": 180\n}"
+            }
+          }
+        },
+        {
+          "name": "Purchase Package",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/packages/{{package_id}}/purchase",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"{{customer_id}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Analytics",
+      "item": [
+        {
+          "name": "Revenue Analytics",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/analytics/revenue",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Top Services",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/analytics/top-services",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Appointment Analytics",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/analytics/appointments",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Staff Commission",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/analytics/staff/commission",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Customer Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/analytics/customers/summary",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Branches",
+      "item": [
+        {
+          "name": "Get All Branches",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/branches",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Check Branch Availability",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/branches/{{branch_id}}/availability?date=2026-04-25",
+              "query": [{ "key": "date", "value": "2026-04-25" }]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Calendar",
+      "item": [
+        {
+          "name": "Download .ics Feed",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/calendar/feed.ics?tenant_id={{tenant_id}}",
+              "query": [{ "key": "tenant_id", "value": "{{tenant_id}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Payments",
+      "item": [
+        {
+          "name": "Create Payment Intent",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/payments/intent",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointment_id\": \"{{appointment_id}}\",\n  \"amount\": 500\n}"
+            }
+          }
+        },
+        {
+          "name": "Process Refund",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/payments/refund",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointment_id\": \"{{appointment_id}}\",\n  \"reason\": \"Customer request\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Reviews",
+      "item": [
+        {
+          "name": "Get All Reviews",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reviews",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/reviews",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appointment_id\": \"{{appointment_id}}\",\n  \"rating\": 5,\n  \"comment\": \"Amazing service, Amira is the best!\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. GDPR",
+      "item": [
+        {
+          "name": "Export Customer Data",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/gdpr/export",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Delete Customer Data",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/gdpr/delete",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"{{customer_id}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. Tenant",
+      "item": [
+        {
+          "name": "Get Tenant Info",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/tenants/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Tenant Usage",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/tenants/me/usage",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17. Webhooks",
+      "item": [
+        {
+          "name": "Get All Webhooks",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/webhooks",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Create Webhook",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/webhooks",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://your-endpoint.com/webhook\",\n  \"events\": [\"appointment.created\", \"appointment.cancelled\"]\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

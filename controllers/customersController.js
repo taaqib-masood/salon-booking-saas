@@ -1,4 +1,19 @@
 import { supabase } from '../lib/supabase.js';
+import { decrypt } from '../utils/encryption.js';
+
+// ── Decrypt helpers ───────────────────────────────────────────────────────────
+function dec(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    name:  decrypt(row.name),
+    phone: decrypt(row.phone),
+    email: decrypt(row.email),
+  };
+}
+const decAll = rows => (rows || []).map(dec);
+
+// ── Controllers ───────────────────────────────────────────────────────────────
 
 export async function getCustomers(req, res) {
   const { data, error } = await supabase
@@ -6,10 +21,10 @@ export async function getCustomers(req, res) {
     .select('id,name,phone,email,loyalty_points,total_spent,visit_count,preferred_language,created_at')
     .eq('tenant_id', req.staff.tenant_id)
     .eq('is_deleted', false)
-    .order('name');
+    .order('created_at', { ascending: false });
 
   if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
+  res.json(decAll(data));
 }
 
 export async function getCustomerById(req, res) {
@@ -22,7 +37,7 @@ export async function getCustomerById(req, res) {
     .single();
 
   if (error || !data) return res.status(404).json({ error: 'Customer not found' });
-  res.json(data);
+  res.json(dec(data));
 }
 
 export async function getAppointmentsByCustomerId(req, res) {
@@ -49,7 +64,7 @@ export async function updateCustomerProfile(req, res) {
     .single();
 
   if (error || !data) return res.status(404).json({ error: 'Customer not found' });
-  res.json(data);
+  res.json(dec(data));
 }
 
 export async function deleteCustomer(req, res) {
@@ -66,7 +81,7 @@ export async function deleteCustomer(req, res) {
 export async function getLoyaltyBalance(req, res) {
   const { data: customer, error } = await supabase
     .from('customers')
-    .select('loyalty_points,total_spent,visit_count')
+    .select('loyalty_points,total_spent,visit_count,name,phone,email')
     .eq('id', req.params.id)
     .eq('tenant_id', req.staff.tenant_id)
     .single();
@@ -80,5 +95,5 @@ export async function getLoyaltyBalance(req, res) {
     .order('created_at', { ascending: false })
     .limit(20);
 
-  res.json({ ...customer, recent_transactions: txns || [] });
+  res.json({ ...dec(customer), recent_transactions: txns || [] });
 }

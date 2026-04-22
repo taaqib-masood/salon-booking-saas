@@ -1,26 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import IcalLink from './IcalLink';
+import { useParams } from 'react-router-dom';
 
-const BookingConfirmation = ({ match }) => {
+const BookingConfirmation = () => {
+  const { id } = useParams();
   const [appointment, setAppointment] = useState(null);
+  const [cancelPolicy, setCancelPolicy] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/v1/appointments/${match.params.id}`);
+        const response = await axios.get(`/api/v1/appointments/${id}`);
         setAppointment(response.data);
+        // Fetch cancellation policy from public tenant endpoint
+        const tenantId = response.data?.tenant_id;
+        if (tenantId) {
+          const pub = await axios.get(`/api/v1/tenants/${tenantId}/public`).catch(() => null);
+          if (pub?.data?.cancellationPolicy) setCancelPolicy(pub.data.cancellationPolicy);
+        }
       } catch (error) {
         console.log('Error fetching appointment:', error);
       }
     };
 
     fetchData();
-  }, [match.params.id]);
+  }, [id]);
 
   const handleCancel = async () => {
     try {
-      await axios.delete(`/api/v1/appointments/${match.params.id}`);
+      await axios.delete(`/api/v1/appointments/${id}`);
       alert('Appointment cancelled successfully');
     } catch (error) {
       console.log('Error cancelling appointment:', error);
@@ -46,11 +55,15 @@ const BookingConfirmation = ({ match }) => {
         <p>Total: AED {total.toFixed(2)}</p>
       </div>
       <IcalLink appointment={appointment} />
+      {cancelPolicy && (
+        <div style={{ marginTop: '1rem', padding: '1rem', background: '#f9f6f0', borderRadius: '8px', borderLeft: '3px solid #D4AF37' }}>
+          <p style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#888', marginBottom: '0.25rem' }}>Cancellation Policy</p>
+          <p style={{ fontSize: '0.875rem', color: '#2a2a2a' }}>{cancelPolicy}</p>
+        </div>
+      )}
       <button onClick={handleCancel}>Cancel Appointment</button>
     </div>
   );
 };
 
 export default BookingConfirmation;
-
-Please note that this code assumes you have a `IcalLink` component to generate the .ics file and add it to calendar. Also, please replace `new Date(dateTime).toLocaleString()` with your own date formatting logic if needed. The `handleCancel` function will delete the appointment from the database when the Cancel Appointment button is clicked.

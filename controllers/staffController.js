@@ -1,11 +1,28 @@
 import bcrypt from 'bcryptjs';
 import { supabase } from '../lib/supabase.js';
 
+// GET /api/v1/staff/public?tenant_id=xxx  — public-facing staff directory
+export async function getPublicStaff(req, res) {
+  const tenant_id = req.query.tenant_id || req.headers['x-tenant-id'];
+  if (!tenant_id) return res.status(400).json({ error: 'tenant_id required' });
+
+  const { data, error } = await supabase
+    .from('staff')
+    .select('id,name,role,photo_url,bio,specialties')
+    .eq('tenant_id', tenant_id)
+    .eq('is_active', true)
+    .eq('is_deleted', false)
+    .order('name');
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+}
+
 export async function getStaff(req, res) {
   const { branch_id, role, active } = req.query;
   let query = supabase
     .from('staff')
-    .select('id,name,email,phone,role,specialties,commission_rate,working_days,is_active,branch_id,branches(name)')
+    .select('id,name,email,phone,role,specialties,photo_url,bio,commission_rate,working_days,is_active,branch_id,branches(name)')
     .eq('tenant_id', req.staff.tenant_id)
     .eq('is_deleted', false);
 
@@ -21,7 +38,7 @@ export async function getStaff(req, res) {
 export async function getStaffById(req, res) {
   const { data, error } = await supabase
     .from('staff')
-    .select('id,name,email,phone,role,specialties,commission_rate,working_days,is_active,branch_id')
+    .select('id,name,email,phone,role,specialties,photo_url,bio,commission_rate,working_days,is_active,branch_id')
     .eq('id', req.params.id)
     .eq('tenant_id', req.staff.tenant_id)
     .eq('is_deleted', false)
@@ -33,6 +50,7 @@ export async function getStaffById(req, res) {
 
 export async function createStaff(req, res) {
   const { password, ...fields } = req.body;
+  if (!password) return res.status(400).json({ error: 'Password is required' });
   const password_hash = await bcrypt.hash(password, 10);
 
   const { data, error } = await supabase
@@ -41,7 +59,10 @@ export async function createStaff(req, res) {
     .select('id,name,email,role,is_active')
     .single();
 
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) {
+    const msg = error.message?.includes('duplicate key') ? 'A staff member with this email already exists' : error.message;
+    return res.status(400).json({ error: msg });
+  }
   res.status(201).json(data);
 }
 
