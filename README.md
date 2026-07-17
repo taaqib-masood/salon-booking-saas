@@ -156,267 +156,96 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <div align="center">
 
-# <img src="https://readme-typing-svg.herokuapp.com?font=Inter&weight=600&size=30&pause=1000&color=9C27B0&center=true&vCenter=true&width=500&lines=Software+Engineer;AI+%2F+ML+Specialist;Full-Stack+Developer" alt="Typing SVG" />
+# <img src="https://readme-typing-svg.herokuapp.com?font=Inter&weight=600&size=30&pause=1000&color=F43F5E&center=true&vCenter=true&width=500&lines=Multi-Tenant+SaaS;Payment+Gateways;Robust+Backends" alt="Typing SVG" />
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=7C3AED&height=200&section=header&text=Taaqib%20Masood&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Enterprise-Grade%20Engineering&descAlignY=55&descAlign=50" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=F43F5E&height=200&section=header&text=Taaqib%20Masood&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Scalable%20Cloud%20Architecture&descAlignY=55&descAlign=50" />
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Location-Global-7C3AED?style=for-the-badge&logo=google-maps&logoColor=white" />
-  <img src="https://img.shields.io/badge/Education-B.S.%20Computer%20Science-9C27B0?style=for-the-badge&logo=academia&logoColor=white" />
+  <img src="https://img.shields.io/badge/Location-Global-F43F5E?style=for-the-badge&logo=google-maps&logoColor=white" />
+  <img src="https://img.shields.io/badge/Education-B.S.%20Computer%20Science-000000?style=for-the-badge&logo=academia&logoColor=white" />
 </p>
 
 <p align="center">
-  <a href="https://taaqib-portfolio.vercel.app/"><img src="https://img.shields.io/badge/Portfolio-7C3AED?style=for-the-badge&logo=vercel&logoColor=white" /></a>
-  <a href="https://www.linkedin.com/in/taaqib-masood/"><img src="https://img.shields.io/badge/LinkedIn-9C27B0?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
-  <a href="mailto:taaqibmasood@gmail.com"><img src="https://img.shields.io/badge/Email-7C3AED?style=for-the-badge&logo=gmail&logoColor=white" /></a>
-  <a href="https://github.com/taaqib-masood"><img src="https://img.shields.io/badge/GitHub-9C27B0?style=for-the-badge&logo=github&logoColor=white" /></a>
-</p>
-
-<p align="center">
-  <img src="https://komarev.com/ghpvc/?username=taaqib-masood&label=Profile%20Views&color=7C3AED&style=for-the-badge" />
-  <img src="https://img.shields.io/github/followers/taaqib-masood?label=Followers&style=for-the-badge&color=9C27B0&logo=github" />
-  <img src="https://img.shields.io/github/stars/taaqib-masood?style=for-the-badge&color=7C3AED&logo=github" />
+  <a href="https://taaqib-portfolio.vercel.app/"><img src="https://img.shields.io/badge/Portfolio-F43F5E?style=for-the-badge&logo=vercel&logoColor=white" /></a>
+  <a href="https://www.linkedin.com/in/taaqib-masood/"><img src="https://img.shields.io/badge/LinkedIn-000000?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
+  <a href="mailto:taaqibmasood@gmail.com"><img src="https://img.shields.io/badge/Email-F43F5E?style=for-the-badge&logo=gmail&logoColor=white" /></a>
+  <a href="https://github.com/taaqib-masood"><img src="https://img.shields.io/badge/GitHub-000000?style=for-the-badge&logo=github&logoColor=white" /></a>
 </p>
 
 </div>
 
 ---
 
-<div align="center">
-  <h3> 👨‍💻 About Me </h3>
-</div>
+<details>
+<summary><b><kbd>▶ REVEAL: ABOUT ME (GARAGE DOOR EFFECT)</kbd></b></summary>
+<br>
 
-I am a Software Engineer with a profound focus on AI/ML systems and Full Stack Development. I specialize in building enterprise-grade applications, robust distributed systems, and implementing scalable machine learning solutions in production environments. My engineering philosophy revolves around a strong product mindset, ensuring that the technology not only meets rigorous technical standards but also delivers exceptional user experiences. 
+> I am a Software Engineer with a profound focus on AI/ML systems and Full Stack Development. I specialize in building enterprise-grade applications, robust distributed systems, and implementing scalable machine learning solutions in production environments. My engineering philosophy revolves around a strong product mindset, ensuring that the technology not only meets rigorous technical standards but also delivers exceptional user experiences. 
+> 
+> **Open To:** Senior Software Engineering roles, AI Engineer positions, and high-impact open-source contributions.
 
-**Open To:** Senior Software Engineering roles, AI Engineer positions, and high-impact open-source contributions.
+</details>
 
----
-
-<div align="center">
-  <h3> 🛠️ Tech Stack </h3>
-</div>
+<details>
+<summary><b><kbd>▶ TOGGLE: TECH STACK SPEC-SHEET</kbd></b></summary>
+<br>
 
 ### Languages
-<p align="center">
-  <a href="https://skillicons.dev">
-    <img src="https://skillicons.dev/icons?i=py,ts,js,java,cpp,go,rust&theme=dark" />
-  </a>
+<p align="left">
+  <a href="https://skillicons.dev"><img src="https://skillicons.dev/icons?i=py,ts,js,java,cpp,go,rust&theme=dark" /></a>
 </p>
 
-### Frontend
-<p align="center">
-  <a href="https://skillicons.dev">
-    <img src="https://skillicons.dev/icons?i=react,nextjs,tailwind,redux,html,css,vue&theme=dark" />
-  </a>
+### Frontend & Backend
+<p align="left">
+  <a href="https://skillicons.dev"><img src="https://skillicons.dev/icons?i=react,nextjs,tailwind,nodejs,postgres,mongodb,redis&theme=dark" /></a>
 </p>
 
-### Backend & Databases
-<p align="center">
-  <a href="https://skillicons.dev">
-    <img src="https://skillicons.dev/icons?i=nodejs,express,django,fastapi,postgres,mongodb,redis,mysql&theme=dark" />
-  </a>
+### Cloud & DevOps
+<p align="left">
+  <a href="https://skillicons.dev"><img src="https://skillicons.dev/icons?i=aws,gcp,docker,kubernetes,githubactions&theme=dark" /></a>
 </p>
 
-### Cloud, DevOps & Tooling
-<p align="center">
-  <a href="https://skillicons.dev">
-    <img src="https://skillicons.dev/icons?i=aws,gcp,docker,kubernetes,githubactions,git,linux&theme=dark" />
-  </a>
-</p>
+</details>
 
----
+<details>
+<summary><b><kbd>▶ TOGGLE: AI / ML EXPERTISE (SPEC-SHEET TOOLTIPS)</kbd></b></summary>
+<br>
 
-<div align="center">
-  <h3> 🧠 AI / ML Expertise </h3>
-</div>
-
-| Domain | Proficiency | Details |
+| Domain | Proficiency | Spec-Sheet (Hover) |
 | :--- | :---: | :--- |
-| **Large Language Models (LLMs)** | Advanced | Prompt Engineering, RAG Architectures, Agentic Systems, MCP |
-| **Machine Learning** | Advanced | Predictive Modeling, Classification, Regression, Ensemble Methods |
-| **Deep Learning** | Intermediate | Neural Networks, CNNs, NLP, PyTorch, TensorFlow |
-| **MLOps** | Intermediate | Model Deployment, Monitoring, CI/CD for ML, Data Pipelines |
-
----
-
-<div align="center">
-  <h3> 🚀 Featured Projects </h3>
-</div>
-
-<details>
-<summary><b>Taaqib Portfolio</b></summary>
-<br>
-
-A premium software engineering portfolio demonstrating advanced full-stack capabilities, modern UI/UX principles, and high-performance web development.
-
-| Attribute | Details |
-| :--- | :--- |
-| **Stack** | Next.js, React, Tailwind CSS, TypeScript |
-| **Scale** | Global Edge Delivery |
-| **Performance** | 99+ Lighthouse Score |
-| **Security** | Modern Web Security Practices |
-| **Impact** | Personal brand establishment and professional showcase |
-| **Repository** | [Taaqib-Portfolio](https://github.com/taaqib-masood/Taaqib-Portfolio) |
-
-Built with a focus on dark luxury aesthetic, responsive design, and seamless micro-animations, this portfolio serves as the definitive central hub for my professional identity.
+| **Large Language Models (LLMs)** | Advanced | <abbr title="Prompt Engineering, RAG Architectures, Agentic Systems, MCP">Hover for details</abbr> |
+| **Machine Learning** | Advanced | <abbr title="Predictive Modeling, Classification, Regression, Ensemble Methods">Hover for details</abbr> |
+| **Deep Learning** | Intermediate | <abbr title="Neural Networks, CNNs, NLP, PyTorch, TensorFlow">Hover for details</abbr> |
+| **MLOps** | Intermediate | <abbr title="Model Deployment, Monitoring, CI/CD for ML, Data Pipelines">Hover for details</abbr> |
 
 </details>
 
 <details>
-<summary><b>Predictive Maintenance for Industrial Machinery</b></summary>
+<summary><b><kbd>▶ REVEAL: FEATURED PROJECTS</kbd></b></summary>
 <br>
 
-An AI-driven solution for forecasting equipment failures before they occur, minimizing downtime and optimizing maintenance schedules.
-
-| Attribute | Details |
-| :--- | :--- |
-| **Stack** | Python, Scikit-Learn, Pandas, FastAPI, React |
-| **Scale** | Real-time sensor data processing |
-| **Performance** | High accuracy failure prediction |
-| **Security** | Encrypted data transmission and secure endpoints |
-| **Impact** | Significant reduction in industrial downtime |
-| **Repository** | [predictive-maintenance-industrial-machinery](https://github.com/taaqib-masood/predictive-maintenance-industrial-machinery) |
-
-Leverages advanced machine learning algorithms on sensor telemetry to predict anomalies, implemented as a scalable microservice architecture ready for enterprise deployment.
-
-</details>
-
-<details>
-<summary><b>Salon Booking SaaS</b></summary>
-<br>
-
-A comprehensive multi-tenant SaaS platform tailored for salons to manage appointments, staff schedules, and customer relationships.
-
-| Attribute | Details |
-| :--- | :--- |
-| **Stack** | Node.js, Express, PostgreSQL, React, Stripe |
-| **Scale** | Multi-tenant architecture |
-| **Performance** | Optimized database queries and caching |
-| **Security** | Role-based Access Control (RBAC), Secure Payments |
-| **Impact** | Streamlined operations for multiple small businesses |
-| **Repository** | [salon-booking-saas](https://github.com/taaqib-masood/salon-booking-saas) |
-
-Features a robust backend capable of handling concurrent bookings, integrated payment processing, and a highly intuitive interface for both business owners and end-users.
-
-</details>
-
-<details>
-<summary><b>Majestic Constructions</b></summary>
-<br>
-
-An enterprise website for a construction firm, focusing on lead generation, portfolio display, and client communication.
-
-| Attribute | Details |
-| :--- | :--- |
-| **Stack** | Next.js, Tailwind CSS, CMS Integration |
-| **Scale** | High-traffic corporate site |
-| **Performance** | Server-side rendering for fast load times |
-| **Security** | Protection against common web vulnerabilities |
-| **Impact** | Increased digital presence and client inquiries |
-| **Repository** | [majestic-constructions](https://github.com/taaqib-masood/majestic-constructions) |
-
-Engineered to convey trust and authority through premium design, optimized for SEO, and built with modern web standards to ensure longevity and maintainability.
+- **[Taaqib Portfolio](https://github.com/taaqib-masood/Taaqib-Portfolio)**: Global Edge Delivery, 99+ Lighthouse Score.
+- **[Predictive Maintenance](https://github.com/taaqib-masood/predictive-maintenance-industrial-machinery)**: High accuracy failure prediction on real-time sensor data.
+- **[Salon Booking SaaS](https://github.com/taaqib-masood/salon-booking-saas)**: Multi-tenant architecture with secure Stripe payments.
+- **[Majestic Constructions](https://github.com/taaqib-masood/majestic-constructions)**: High-traffic enterprise site with fast server-side rendering.
 
 </details>
 
 ---
 
 <div align="center">
-  <h3> 💻 Coding Profiles </h3>
+  <h3> 📊 GitHub Analytics & Snake </h3>
 </div>
 
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/LeetCode-500+%20Solved-9C27B0?style=for-the-badge&logo=leetcode&logoColor=white" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/GeeksforGeeks-Top%20Coder-7C3AED?style=for-the-badge&logo=geeksforgeeks&logoColor=white" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/HackerRank-5%20Star%20Gold-9C27B0?style=for-the-badge&logo=hackerrank&logoColor=white" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/CodeChef-4%20Star-7C3AED?style=for-the-badge&logo=codechef&logoColor=white" /></a>
+  <img src="https://github-readme-stats.vercel.app/api?username=taaqib-masood&show_icons=true&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=F43F5E&icon_color=ffffff" alt="GitHub Stats" />
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=taaqib-masood&theme=tokyonight&hide_border=true&background=0D1117&ring=F43F5E&fire=ffffff&currStreakLabel=F43F5E" alt="GitHub Streak" />
 </p>
-
----
-
-<div align="center">
-  <h3> 📊 GitHub Analytics </h3>
-</div>
-
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=taaqib-masood&show_icons=true&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=7C3AED&icon_color=9C27B0" alt="GitHub Stats" />
-</p>
-<p align="center">
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=taaqib-masood&theme=tokyonight&hide_border=true&background=0D1117&ring=7C3AED&fire=9C27B0&currStreakLabel=7C3AED" alt="GitHub Streak" />
-</p>
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=taaqib-masood&layout=compact&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=7C3AED" alt="Top Languages" />
-</p>
-
----
-
-<div align="center">
-  <h3> 🏆 GitHub Trophies </h3>
-</div>
-
-<p align="center">
-  <img src="https://github-profile-trophy.vercel.app/?username=taaqib-masood&theme=tokyonight&no-frame=true&no-bg=true&margin-w=15" alt="GitHub Trophies" />
-</p>
-
----
-
-<div align="center">
-  <h3> 📈 Contribution Activity </h3>
-</div>
-
-<p align="center">
-  <img src="https://github-readme-activity-graph.vercel.app/graph?username=taaqib-masood&theme=tokyo-night&bg_color=0D1117&color=7C3AED&line=9C27B0&point=FFFFFF&hide_border=true" alt="Activity Graph" />
-</p>
-
----
-
-<div align="center">
-  <h3> 🐍 Contribution Snake </h3>
-</div>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/taaqib-masood/taaqib-masood/output/github-contribution-grid-snake-dark.svg" alt="Contribution Snake" />
 </p>
 
----
-
 <div align="center">
-  <h3> 🎯 Current Focus </h3>
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=F43F5E&height=100&section=footer" />
 </div>
-
-```yaml
-Current_Focus:
-  Learning:
-    - Advanced AI Agent Orchestration
-    - High-Performance Rust Microservices
-  Building:
-    - Enterprise-Grade RAG Systems
-    - Open Source LLM Tooling
-  Exploring:
-    - Zero-Knowledge Proofs in Web3
-    - Quantum Machine Learning
-  Open_To:
-    - Senior Engineering Roles
-    - Innovative Open Source Collaborations
-```
-
----
-
-<div align="center">
-  <h3> 🌐 Connect </h3>
-</div>
-
-<p align="center">
-  <a href="mailto:taaqibmasood@gmail.com"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>
-  <a href="https://www.linkedin.com/in/taaqib-masood/"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
-  <a href="https://github.com/taaqib-masood"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" /></a>
-  <a href="https://taaqib-portfolio.vercel.app/"><img src="https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
-</p>
-
----
-
-<div align="center">
-  <i>"Simplicity is the ultimate sophistication in engineering."</i>
-</div>
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=9C27B0&height=100&section=footer" />
