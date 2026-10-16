@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase.js';
 const ReviewController = {
   async createReview(req, res) {
     const { appointment_id, rating, comment } = req.body;
-    const tenant_id = req.staff?.tenant_id || req.customer?.tenant_id;
+    const tenant_id = req.customer.tenant_id;
 
     const { data: appt } = await supabase
       .from('appointments')
@@ -13,6 +13,7 @@ const ReviewController = {
       .single();
 
     if (!appt) return res.status(404).json({ error: 'Appointment not found' });
+    if (appt.customer_id !== req.customer.id) return res.status(403).json({ error: 'Appointment does not belong to customer' });
     if (appt.status !== 'completed') return res.status(400).json({ error: 'Can only review completed appointments' });
 
     const { data, error } = await supabase
@@ -35,12 +36,13 @@ const ReviewController = {
   },
 
   async getReviews(req, res) {
-    const tenant_id = req.staff?.tenant_id;
+    const tenant_id = req.staff?.tenant_id || req.headers['x-tenant-id'];
+    if (!tenant_id) return res.status(400).json({ error: 'Tenant context required' });
     const { staff_id, service_id, branch_id } = req.query;
 
     let query = supabase
       .from('reviews')
-      .select('*, customers(name), staff(name), services(name_en)')
+      .select('id, rating, comment, created_at, customers(name), staff(name), services(name_en)')
       .eq('tenant_id', tenant_id)
       .eq('is_published', true)
       .order('created_at', { ascending: false });
@@ -55,10 +57,15 @@ const ReviewController = {
   },
 
   async getReviewById(req, res) {
+    const tenant_id = req.staff?.tenant_id || req.headers['x-tenant-id'];
+    if (!tenant_id) return res.status(400).json({ error: 'Tenant context required' });
+
     const { data, error } = await supabase
       .from('reviews')
-      .select('*, customers(name), staff(name), services(name_en)')
+      .select('id, rating, comment, created_at, customers(name), staff(name), services(name_en)')
       .eq('id', req.params.id)
+      .eq('tenant_id', tenant_id)
+      .eq('is_published', true)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Review not found' });
