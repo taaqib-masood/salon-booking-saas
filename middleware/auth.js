@@ -39,6 +39,7 @@ export const authenticateCustomer = async (req, res, next) => {
       .from('customers')
       .select('id, name, phone, email, tenant_id')
       .eq('id', decoded.id)
+      .eq('is_deleted', false)
       .single();
 
     if (error || !customer) throw new Error('Customer not found');
