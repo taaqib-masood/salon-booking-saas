@@ -28,6 +28,30 @@ export const authenticate = async (req, res, next) => {
   }
 };
 
+export const authenticateCustomer = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) throw new Error('No token');
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.type !== 'customer') throw new Error('Not a customer token');
+
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('id, tenant_id, is_deleted')
+      .eq('id', decoded.id)
+      .eq('is_deleted', false)
+      .single();
+
+    if (error || !customer) throw new Error('Customer not found');
+
+    req.customer = customer;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Authentication failed' });
+  }
+};
+
 export const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.staff.role)) {

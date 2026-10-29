@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
@@ -70,7 +70,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 });
 
 // POST /payments/refund
-router.post('/refund', authenticate, async (req, res) => {
+router.post('/refund', authenticate, authorize('owner', 'admin'), async (req, res) => {
   try {
     const { default: Stripe } = await import('stripe');
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
