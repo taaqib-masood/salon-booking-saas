@@ -1,5 +1,10 @@
 import { supabase } from '../lib/supabase.js';
 
+// Never accept tenant_id, secret, created_by or stats from the client.
+const WEBHOOK_FIELDS = ['url', 'events', 'is_active'];
+const pick = (body, fields) =>
+  Object.fromEntries(fields.filter((f) => body[f] !== undefined).map((f) => [f, body[f]]));
+
 export async function getWebhooks(req, res) {
   const { data, error } = await supabase
     .from('webhooks')
@@ -14,7 +19,7 @@ export async function getWebhooks(req, res) {
 export async function createWebhook(req, res) {
   const { data, error } = await supabase
     .from('webhooks')
-    .insert({ ...req.body, tenant_id: req.staff.tenant_id })
+    .insert({ ...pick(req.body, WEBHOOK_FIELDS), tenant_id: req.staff.tenant_id })
     .select()
     .single();
 
@@ -23,9 +28,14 @@ export async function createWebhook(req, res) {
 }
 
 export async function updateWebhook(req, res) {
+  const updates = pick(req.body, WEBHOOK_FIELDS);
+  if (!Object.keys(updates).length) {
+    return res.status(400).json({ error: 'No updatable fields' });
+  }
+
   const { data, error } = await supabase
     .from('webhooks')
-    .update(req.body)
+    .update(updates)
     .eq('id', req.params.id)
     .eq('tenant_id', req.staff.tenant_id)
     .select()
