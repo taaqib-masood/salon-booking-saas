@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/api/v1' });
+const api = axios.create({
+  baseURL: '/api/v1',
+  headers: { 'X-Tenant-ID': import.meta.env.VITE_TENANT_ID },
+});
 
 // Inject token from localStorage on every request
 api.interceptors.request.use(config => {

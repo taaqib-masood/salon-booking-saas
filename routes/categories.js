@@ -7,10 +7,10 @@ const router = express.Router();
 // GET /categories — public, list all for a tenant
 router.get('/', async (req, res) => {
   try {
-    // tenant_id from header for public endpoints
     const tenant_id = req.headers['x-tenant-id'];
+    if (!tenant_id) return res.status(400).json({ error: 'Tenant context required' });
     let query = supabase.from('service_categories').select('id, name_en, name_ar, icon');
-    if (tenant_id) query = query.eq('tenant_id', tenant_id);
+    query = query.eq('tenant_id', tenant_id);
 
     const { data, error } = await query.order('name_en');
     if (error) return res.status(400).json({ error: error.message });
@@ -23,10 +23,14 @@ router.get('/', async (req, res) => {
 // GET /categories/:id
 router.get('/:id', async (req, res) => {
   try {
+    const tenant_id = req.headers['x-tenant-id'];
+    if (!tenant_id) return res.status(400).json({ error: 'Tenant context required' });
+
     const { data, error } = await supabase
       .from('service_categories')
       .select('id, name_en, name_ar, icon')
       .eq('id', req.params.id)
+      .eq('tenant_id', tenant_id)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Category not found' });

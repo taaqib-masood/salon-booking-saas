@@ -10,6 +10,7 @@ function buildImageUrl(service) {
 export async function getServices(req, res) {
   // Try staff tenant ID first, fallback to public header
   const tenant_id = req.staff?.tenant_id || req.headers['x-tenant-id'];
+  if (!tenant_id) return res.status(400).json({ error: 'Tenant context required' });
   const { branch_id, category_id, active } = req.query;
 
   let query = supabase
@@ -17,7 +18,7 @@ export async function getServices(req, res) {
     .select('*, service_categories(name_en,name_ar,icon)')
     .eq('is_deleted', false);
 
-  if (tenant_id) query = query.eq('tenant_id', tenant_id);
+  query = query.eq('tenant_id', tenant_id);
 
   if (active !== 'false') query = query.eq('is_active', true);
   if (category_id) query = query.eq('category_id', category_id);
@@ -39,6 +40,7 @@ export async function getServices(req, res) {
 
 export async function getServiceById(req, res) {
   const tenant_id = req.staff?.tenant_id || req.headers['x-tenant-id'];
+  if (!tenant_id) return res.status(400).json({ error: 'Tenant context required' });
   
   let query = supabase
     .from('services')
@@ -46,9 +48,7 @@ export async function getServiceById(req, res) {
     .eq('id', req.params.id)
     .eq('is_deleted', false);
     
-  if (tenant_id) {
-    query = query.eq('tenant_id', tenant_id);
-  }
+  query = query.eq('tenant_id', tenant_id);
 
   const { data, error } = await query.single();
 
