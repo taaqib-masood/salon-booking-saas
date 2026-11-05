@@ -22,6 +22,15 @@ export async function publicCreateAppointment(req, res) {
 
   if (svcErr || !service) return res.status(400).json({ error: 'Service not found' });
 
+  if (customer_id) {
+    const { data: customer, error: customerError } = await supabase.from('customers')
+      .select('id')
+      .eq('id', customer_id)
+      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .single();
+    if (customerError || !customer) return res.status(400).json({ error: 'Customer not found for this tenant' });
+  }
+
   const price = service.price || 0;
   const vat = +(price * 0.05).toFixed(2);
   const total = +(price + vat).toFixed(2);

@@ -32,11 +32,13 @@ mock.module('../utils/whatsapp.js', { namedExports: { sendStaffCancellation: asy
 const { publicCreateAppointment } = await import('../controllers/appointmentsController.js');
 const { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } = await import('../lib/defaults.js');
 
-async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], staffError = null } = {}) {
+async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], staffError = null,
+  customerId, customer = { id: customerId }, customerError = null } = {}) {
   queries = [];
   inserted = undefined;
   responses = {
     services: [{ data: { price: 100, duration: 60, name_en: 'Cut' } }],
+    customers: [{ data: customer, error: customerError }],
     staff: [{ data: staff, error: staffError }],
     appointments: [{ data: bookings.map(booking => ({ time_slot: '10:00:00', end_time: '11:00:00', ...booking })) },
       { data: { id: 'appointment' } }]
@@ -47,7 +49,8 @@ async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], sta
     json(body) { this.body = body; return this; }
   };
   await publicCreateAppointment({ body: {
-    service_id: 'service', staff_id: staffId, date: '2026-11-08', time_slot: '10:00'
+    service_id: 'service', staff_id: staffId, date: '2026-11-08', time_slot: '10:00',
+    customer_id: customerId, firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test'
   } }, res);
   return res;
 }
@@ -90,4 +93,37 @@ test('adjacent bookings do not occupy the requested interval', async () => {
   ] });
   assert.equal(res.code, 201);
   assert.equal(inserted.staff_id, 'stylist-a');
+});
+
+test('booking without a customer id preserves the guest flow for staff and anonymous users', async () => {
+  assert.equal((await book()).code, 201);
+  assert.equal(inserted.customer_id, null);
+  assert.equal(inserted.is_guest, true);
+  assert.equal(inserted.guest.name, 'Ada Lovelace');
+  assert.equal(queries.some(query => query.table === 'customers'), false);
+});
+
+test('a customer id is verified in the booking tenant before linking the appointment', async () => {
+  assert.equal((await book({ customerId: 'customer-a' })).code, 201);
+  assert.equal(inserted.customer_id, 'customer-a');
+  assert.equal(inserted.is_guest, false);
+  assert.equal(inserted.guest, null);
+  const filters = queries.find(query => query.table === 'customers').filters;
+  for (const pair of [['id', 'customer-a'], ['tenant_id', DEFAULT_TENANT_ID]]) {
+    assert.ok(filters.some(filter => JSON.stringify(filter) === JSON.stringify(pair)));
+  }
+});
+
+test('staff ids and customers outside the tenant are rejected before inserting', async () => {
+  for (const customerId of ['staff-admin', 'other-tenant-customer']) {
+    const res = await book({ customerId, customer: null });
+    assert.equal(res.code, 400);
+    assert.equal(res.body.error, 'Customer not found for this tenant');
+    assert.equal(inserted, undefined);
+  }
+});
+
+test('customer lookup errors do not create an appointment', async () => {
+  assert.equal((await book({ customerId: 'customer-a', customerError: { message: 'lookup failed' } })).code, 400);
+  assert.equal(inserted, undefined);
 });

@@ -50,7 +50,7 @@ const STEP_LABELS = ['Service', 'Stylist', 'Time', 'Details'];
 export default function BookingFlow() {
   const location = useLocation();
   const navigate  = useNavigate();
-  const { token, user } = useAuth();
+  const { user, role } = useAuth();
 
   if (!location.state?.serviceId) return <Navigate to="/" replace />;
 
@@ -149,7 +149,7 @@ export default function BookingFlow() {
         staff_id:    bookingData.staffId || undefined,
         date:        bookingData.date,
         time_slot:   bookingData.time,
-        customer_id: user?.id || null,
+        customer_id: role === 'customer' ? user?.id : undefined,
         firstName:   bookingData.firstName,
         lastName:    bookingData.lastName,
         phone:       bookingData.phone,
