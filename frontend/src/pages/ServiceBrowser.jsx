@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useScrollReveal, useStaggerReveal } from '../hooks/useScrollReveal';
 import { useLang } from '../contexts/LangContext';
@@ -111,8 +111,8 @@ function ServiceBrowser() {
     const fetchData = async () => {
       try {
         const [catsRes, servsRes] = await Promise.all([
-          axios.get('/api/v1/categories'),
-          axios.get('/api/v1/services')
+          api.get('/categories'),
+          api.get('/services')
         ]);
         setCategories(catsRes.data);
         setServices(servsRes.data);

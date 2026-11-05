@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../contexts';
 
 export default function RegisterPage() {
@@ -18,7 +18,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       // Register the account
-      await axios.post('/api/v1/auth/customer/register', form);
+      await api.post('/auth/customer/register', form);
       // Then log in via AuthContext so token/user state is set properly
       await login(form.phone, form.password);
       navigate('/dashboard');

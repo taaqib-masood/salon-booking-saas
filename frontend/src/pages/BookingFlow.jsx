@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../contexts';
 import * as htmlToImage from 'html-to-image';
 
@@ -50,12 +50,13 @@ const STEP_LABELS = ['Service', 'Stylist', 'Time', 'Details'];
 export default function BookingFlow() {
   const location = useLocation();
   const navigate  = useNavigate();
-  const { token, user } = useAuth();
+  const { user, role } = useAuth();
 
   if (!location.state?.serviceId) return <Navigate to="/" replace />;
 
   const [step, setStep]               = useState(1);
   const [loading, setLoading]         = useState(false);
+  const [bookingError, setBookingError] = useState('');
   const [serviceDetails, setServiceDetails] = useState(null);
   const [staffList, setStaffList]     = useState([]);
   const [staffLoading, setStaffLoading] = useState(false);
@@ -78,7 +79,7 @@ export default function BookingFlow() {
 
   // Fetch service details
   useEffect(() => {
-    axios.get(`/api/v1/services/${bookingData.serviceId}`)
+    api.get(`/services/${bookingData.serviceId}`)
       .then(r => setServiceDetails(r.data))
       .catch(() => setServiceDetails({
         name_en: 'Signature Spa Treatment', duration: 90, price: 550,
@@ -90,7 +91,7 @@ export default function BookingFlow() {
   useEffect(() => {
     if (!serviceDetails?.tenant_id) return;
     setStaffLoading(true);
-    axios.get(`/api/v1/staff/public?tenant_id=${serviceDetails.tenant_id}`)
+    api.get(`/staff/public?tenant_id=${serviceDetails.tenant_id}`)
       .then(r => setStaffList(Array.isArray(r.data) ? r.data : []))
       .catch(() => setStaffList([]))
       .finally(() => setStaffLoading(false));
@@ -112,7 +113,7 @@ export default function BookingFlow() {
     try {
       const params = { service_id: bookingData.serviceId, date: val };
       if (bookingData.staffId) params.staff_id = bookingData.staffId;
-      const { data } = await axios.get('/api/v1/availability/slots', { params });
+      const { data } = await api.get('/availability/slots', { params });
       setAvailableSlots(data.slots || []);
     } catch {
       setAvailableSlots([]);
@@ -140,24 +141,27 @@ export default function BookingFlow() {
 
   const handleComplete = async (e) => {
     e.preventDefault();
+    setBookingError('');
     setLoading(true);
     try {
-      await axios.post('/api/v1/appointments/book', {
+      await api.post('/appointments/book', {
         service_id:  bookingData.serviceId,
         staff_id:    bookingData.staffId || undefined,
         date:        bookingData.date,
         time_slot:   bookingData.time,
-        customer_id: user?.id || null,
+        customer_id: role === 'customer' ? user?.id : undefined,
         firstName:   bookingData.firstName,
         lastName:    bookingData.lastName,
         phone:       bookingData.phone,
         email:       bookingData.email,
       });
+      setStep(5);
     } catch (err) {
       console.error('Booking failed:', err.response?.data || err.message);
+      setBookingError('We could not complete your reservation. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setStep(5); // success
   };
 
   const calUrl = serviceDetails
@@ -175,6 +179,7 @@ export default function BookingFlow() {
 
   return (
     <div className="max-w-2xl mx-auto py-10 px-4 animate-fade-in">
+      {bookingError && <p role="alert" className="text-red-600 mb-4">{bookingError}</p>}
 
       {/* Progress Bar */}
       {step < 5 && (
