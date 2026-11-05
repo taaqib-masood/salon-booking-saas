@@ -38,7 +38,8 @@ async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], sta
   responses = {
     services: [{ data: { price: 100, duration: 60, name_en: 'Cut' } }],
     staff: [{ data: staff, error: staffError }],
-    appointments: [{ data: bookings }, { data: { id: 'appointment' } }]
+    appointments: [{ data: bookings.map(booking => ({ time_slot: '10:00:00', end_time: '11:00:00', ...booking })) },
+      { data: { id: 'appointment' } }]
   };
   const res = {
     code: 200,
@@ -80,4 +81,13 @@ test('missing or occupied staff does not create an appointment', async () => {
 test('staff lookup failure does not create an appointment', async () => {
   assert.equal((await book({ staffError: { message: 'lookup failed' } })).code, 400);
   assert.equal(inserted, undefined);
+});
+
+test('adjacent bookings do not occupy the requested interval', async () => {
+  const res = await book({ staffId: 'stylist-a', bookings: [
+    { staff_id: 'stylist-a', time_slot: '09:00:00', end_time: '10:00:00' },
+    { staff_id: 'stylist-a', time_slot: '11:00:00', end_time: '12:00:00' }
+  ] });
+  assert.equal(res.code, 201);
+  assert.equal(inserted.staff_id, 'stylist-a');
 });

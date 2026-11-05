@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase.js';
+import { DEFAULT_TENANT_ID } from '../lib/defaults.js';
+import { getEligibleStylists, getStylistBookings, findAvailableStylist } from '../utils/bookingAvailability.js';
 
 function toMinutes(timeStr) {
   if (!timeStr) return 0;
@@ -18,7 +20,8 @@ export async function getAvailableSlots(req, res) {
 
   // Fetch service + tenant_id for settings
   const { data: service, error: svcErr } = await supabase
-    .from('services').select('duration, name_en, tenant_id').eq('id', service_id).single();
+    .from('services').select('duration, name_en, tenant_id')
+    .eq('id', service_id).eq('tenant_id', DEFAULT_TENANT_ID).single();
   if (svcErr || !service) return res.status(404).json({ error: 'Service not found' });
 
   // Fetch tenant working hours settings
@@ -46,14 +49,14 @@ export async function getAvailableSlots(req, res) {
 
   const duration = service.duration || 60;
 
-  // Fetch booked appointments for this date
-  let apptQuery = supabase
-    .from('appointments')
-    .select('time_slot, end_time')
-    .eq('date', date)
-    .in('status', ['confirmed', 'pending']);
-  if (staff_id) apptQuery = apptQuery.eq('staff_id', staff_id);
-  const { data: bookings } = await apptQuery;
+  const { data: staff, error: staffError } = await getEligibleStylists(staff_id);
+  if (staffError) return res.status(400).json({ error: staffError.message });
+  if (!staff?.length) return res.json({ date, duration, service: service.name_en, slots: [] });
+
+  const { data: bookings, error: bookingsError } = await getStylistBookings(
+    date, staff, toTimeStr(openMin), toTimeStr(closeMin)
+  );
+  if (bookingsError) return res.status(400).json({ error: bookingsError.message });
 
   // Fetch staff breaks for this date (recurring + one-time)
   let breakRanges = [];
@@ -73,13 +76,9 @@ export async function getAvailableSlots(req, res) {
   const slots = [];
   for (let start = openMin; start + duration <= closeMin; start += duration) {
     const end = start + duration;
-    const bookedConflict = (bookings || []).some(b => {
-      const bStart = toMinutes(b.time_slot);
-      const bEnd   = b.end_time ? toMinutes(b.end_time) : bStart + 60;
-      return start < bEnd && end > bStart;
-    });
+    const availableStaff = findAvailableStylist(staff, bookings, toTimeStr(start), toTimeStr(end));
     const breakConflict = breakRanges.some(b => start < b.end && end > b.start);
-    if (!bookedConflict && !breakConflict) slots.push(toTimeStr(start));
+    if (availableStaff && !breakConflict) slots.push(toTimeStr(start));
   }
 
   res.json({ date, duration, service: service.name_en, slots });

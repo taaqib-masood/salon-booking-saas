@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase.js';
 import { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } from '../lib/defaults.js';
 import { whatsappQueue } from '../utils/queue.js';
 import { sendStaffCancellation } from '../utils/whatsapp.js';
+import { getEligibleStylists, getStylistBookings, findAvailableStylist } from '../utils/bookingAvailability.js';
 
 // Public endpoint — used by the frontend booking flow for both guests and logged-in customers
 export async function publicCreateAppointment(req, res) {
@@ -30,28 +31,13 @@ export async function publicCreateAppointment(req, res) {
   const endDate = new Date(2000, 0, 1, h, m + (service.duration || 60));
   const end_time = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
 
-  let staffQuery = supabase.from('staff').select('id')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
-    .eq('branch_id', DEFAULT_BRANCH_ID)
-    .eq('is_active', true)
-    .eq('is_deleted', false)
-    .eq('role', 'stylist');
-  if (staff_id) staffQuery = staffQuery.eq('id', staff_id);
-  const { data: staff, error: staffError } = await staffQuery.order('id');
+  const { data: staff, error: staffError } = await getEligibleStylists(staff_id);
   if (staffError) return res.status(400).json({ error: staffError.message });
   if (!staff?.length) return res.status(409).json({ error: 'No eligible stylist is available' });
 
-  const { data: bookings, error: bookingsError } = await supabase.from('appointments')
-    .select('staff_id')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
-    .eq('branch_id', DEFAULT_BRANCH_ID)
-    .eq('date', date)
-    .in('status', ['pending', 'confirmed', 'in_progress'])
-    .in('staff_id', staff.map(member => member.id))
-    .lt('time_slot', end_time)
-    .gt('end_time', time_slot);
+  const { data: bookings, error: bookingsError } = await getStylistBookings(date, staff, time_slot, end_time);
   if (bookingsError) return res.status(400).json({ error: bookingsError.message });
-  const assignedStaff = staff.find(member => !bookings.some(booking => booking.staff_id === member.id));
+  const assignedStaff = findAvailableStylist(staff, bookings, time_slot, end_time);
   if (!assignedStaff) return res.status(409).json({ error: 'No eligible stylist is available at this time' });
 
   const isGuest = !customer_id;
