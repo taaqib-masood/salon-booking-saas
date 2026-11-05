@@ -1,488 +1,556 @@
 # Graph Report - salon-booking-saas  (2026-11-05)
 
 ## Corpus Check
-- 330 files · ~80,396 words
+- 256 files · ~71,522 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 26 file(s) not represented in the graph (top: (none) 14, .css 4, .example 3)
+- Unclassified: 25 file(s) not represented in the graph (top: (none) 14, .css 4, .example 2)
 
 ## Summary
-- 1369 nodes · 2183 edges · 162 communities (71 shown, 91 thin omitted)
-- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 143 edges (avg confidence: 0.85)
+- 1004 nodes · 1708 edges · 101 communities (all shown)
+- Extraction: 93.5% EXTRACTED · 6.5% INFERRED · 0.0% AMBIGUOUS · INFERRED: 111 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7dc91092`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Built from commit: `390eb36f`
+- Source-aware freshness check (stale only if this command prints paths; documentation-only and graph-only commits do not count):
+
+```sh
+git diff --name-only 390eb36ff31091edc87bef1128c8879fb7ffd704 HEAD -- ':(glob)**/*.js' ':(glob)**/*.json' ':(glob)**/*.jsx' ':(glob)**/*.sql' ':(glob)**/*.tf' ':(glob)**/*.ts' ':(glob)**/*.tsx' ':(glob)**/*.yaml' ':(glob)**/*.yml' ':(exclude)graphify-out/**' ':(exclude)output/**'
+```
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- salon-booking-demo/package.json
+- App.jsx
+- executor.js
 - frontend/package.json
-- output/cron/reminders.js
 - values.yaml
-- customer.service.js
-- output/frontend/package.json
 - containers
-- routes/staff.js
-- app.js
+- customer.service.js
 - qatar
-- ref_react
 - spec
 - supabase.js
 - routes/index.js
-- ref_express
-- with
 - annotations
-- twilio.js
-- routes/services.js
-- steps
-- frontend/src/App.jsx
-- services
-- executor.js
-- appointmentsController.js
-- compilerOptions
-- ref_dotenv
 - server.js
-- mongoose
-- followupWorker.js
-- cron/backup.js
-- askDeepSeek
-- App.tsx
-- frontend/src/pages/AdminDashboard.jsx
+- steps
 - dependencies
-- routes/packages.js
-- utils/loyaltyEngine.js
-- output/utils/loyaltyEngine.js
-- output/routes/reviews.js
-- routes/branches.js
-- frontend/src/main.jsx
-- frontend/src/pages/ServiceBrowser.jsx
-- utils/availability.js
-- routes/analytics.js
-- output/frontend/src/App.jsx
-- dependencies
-- output/utils/pos.js
 - package.json
 - queue.js
-- output/package.json
-- staffSchedules.js
-- routes/offers.js
-- webhooks.js
-- manifest.json
+- services
+- compilerOptions
+- dependencies
+- leadQualification.js
+- app.js
+- twilio.js
+- salon-booking-demo/package.json
+- loyaltyEngine.js
+- appointmentsController.js
+- tenantRateLimit.js
+- utils/availability.js
+- ref_mongoose
+- analytics.js
+- staff.js
 - queueDashboard.js
+- routes/branches.js
+- routes/packages.js
+- services.js
+- staffSchedules.js
+- offers.js
+- webhooks.js
+- App.tsx
+- index.tsx
+- manifest.json
+- seed_luxury.js
+- logger.js
+- whatsappWorker.js
 - routes/pos.js
 - routes/reports.js
 - staffBreaks.js
-- models/Appointment.js
+- Appointment.js
 - RedisCache
 - appointmentNotes.js
+- availabilityController.js
 - routes/notifications.js
-- AIPerformancePage.jsx
 - Chart.yaml
-- output/frontend/src/contexts/LangContext.jsx
-- output/utils/i18n.js
-- logger.js
+- validate.js
 - RegionSyncService
-- utils/i18n.js
 - routes/metrics.js
+- scripts
 - namespace.yaml
 - auditLog.js
-- models/Package.js
-- output/models/Offer.js
-- output/models/Package.js
-- output/server.js
-- utils/receipt.js
+- helmet
+- Package.js
+- receipt.js
+- extends
 - cache.js
-- ipWhitelist.js
+- browserslist
+- @testing-library/jest-dom
+- Offer.js
+- Review.js
+- Tenant.js
 - scripts
-- claude.js
-- models/Offer.js
-- models/PosTerminal.js
-- models/Service.js
-- models/ServiceCategory.js
-- output/frontend/tailwind.config.js
-- output/models/Service.js
-- output/models/ServiceCategory.js
-- scripts
+- react@^19.2.4
+- react-router-dom@^7.14.0
+- @testing-library/dom@^10.4.1
 - i18n.config.js
 - .mcp.json
-- @aws-sdk/client-s3@^3.1025.0
-- bcryptjs@^2.4.3
-- @bull-board/api@^6.20.6
-- @bull-board/express@^6.20.6
-- bullmq@^5.73.0
-- exceljs@^4.4.0
-- express@^4.18.2
-- express-rate-limit@^7.0.0
-- express-validator@^7.0.0
-- helmet@^7.0.0
-- ioredis@^5.10.1
-- morgan@^1.10.0
-- node-cron@^4.2.1
-- nodemailer@^8.0.4
-- prom-client@^15.1.3
-- twilio@^4.0.0
-- winston@^3.19.0
-- winston-daily-rotate-file@^5.0.0
-- @aws-sdk/client-s3@^3.1025.0
-- @aws-sdk/lib-storage@^3.1025.0
-- @bull-board/api@^6.20.6
-- @bull-board/express@^6.20.6
-- bullmq@^5.73.0
-- compression@^1.8.1
-- cors@^2.8.6
-- dotenv@^16.4.5
-- exceljs@^4.4.0
-- express@^4.19.2
-- express-rate-limit@^8.3.2
-- express-validator@^7.2.1
-- handlebars@^4.7.9
-- ioredis@^5.10.1
-- node-cron@^4.2.1
-- nodemailer@^8.0.4
-- prom-client@^15.1.3
-- puppeteer-core@^24.40.0
-- rate-limit-redis@^4.3.1
-- twilio@^5.13.1
-- winston-daily-rotate-file@^5.0.0
 
 ## God Nodes (most connected - your core abstractions)
 1. `supabase` - 47 edges
-2. `mongoose` - 39 edges
+2. `express` - 34 edges
 3. `authenticate()` - 25 edges
 4. `authorize()` - 19 edges
 5. `compilerOptions` - 16 edges
-6. `maskPhone()` - 15 edges
-7. `useAuth()` - 14 edges
-8. `AdminDashboard()` - 14 edges
-9. `App()` - 11 edges
-10. `services` - 10 edges
+6. `dotenv` - 16 edges
+7. `maskPhone()` - 15 edges
+8. `useAuth()` - 14 edges
+9. `AdminDashboard()` - 14 edges
+10. `App()` - 11 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `worker` --calls--> `maskPhone()`  [EXTRACTED]
   workers/deadLetterWorker.js → utils/logger.js
-- `start()` --calls--> `startBackupJob()`  [EXTRACTED]
-  server.js → cron/backup.js
+- `startReminderJob()` --calls--> `sendReminder()`  [EXTRACTED]
+  cron/reminders.js → utils/whatsapp.js
 - `anonymizeCustomer()` --calls--> `encrypt()`  [EXTRACTED]
   services/customer.service.js → utils/encryption.js
-- `followupWorker` --calls--> `canSendFollowup()`  [EXTRACTED]
-  workers/followupWorker.js → services/leadQualification.js
-- `followupWorker` --calls--> `maskPhone()`  [EXTRACTED]
-  workers/followupWorker.js → utils/logger.js
+- `worker` --calls--> `maskPhone()`  [EXTRACTED]
+  workers/whatsappWorker.js → utils/logger.js
+- `updateStatus()` --calls--> `sendStaffCancellation()`  [EXTRACTED]
+  controllers/appointmentsController.js → utils/whatsapp.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (162 total, 91 thin omitted)
+## Communities (101 total; all shown)
 
-### Community 0 - "salon-booking-demo/package.json"
+### Community 0 - "App.jsx"
+Cohesion: 0.07
+Nodes (75): App.jsx, App(), Header(), frontend_src_contexts_ar, AuthContext.jsx, AuthContext, AuthProvider(), decodeUser() (+67 more)
+
+### Community 1 - "executor.js"
 Cohesion: 0.05
-Nodes (51): browserslist, development, production, dependencies, axios@^1.14.0, react@^19.2.4, react-dom@^19.2.4, react-router-dom@^7.14.0 (+43 more)
+Nodes (64): @anthropic-ai/sdk, claude.js, askClaude(), UAE_SALON_PLAN, deepseek.js, askDeepSeek(), client, executor.js (+56 more)
 
-### Community 1 - "frontend/package.json"
+### Community 2 - "frontend/package.json"
 Cohesion: 0.06
-Nodes (47): dependencies, axios@^0.27.2, @headlessui/react@^1.6.0, html2canvas@^1.4.1, html-to-image@^1.11.13, jwt-decode@^4.0.0, @material-ui/core@^4.12.4, moment@^2.30.1 (+39 more)
-
-### Community 2 - "output/cron/reminders.js"
-Cohesion: 0.05
-Nodes (18): startReminderJob(), authenticate(), AppointmentSchema, mongoose, branchSchema, mongoose, notificationSchema, mongoose (+10 more)
+Nodes (49): frontend/package.json, dependencies, axios@^0.27.2, @headlessui/react@^1.6.0, html2canvas@^1.4.1, html-to-image@^1.11.13, jwt-decode@^4.0.0, @material-ui/core@^4.12.4 (+41 more)
 
 ### Community 3 - "values.yaml"
 Cohesion: 0.05
-Nodes (38): autoscaling, enabled, maxReplicas, minReplicas, targetCPUUtilizationPercentage, targetMemoryUtilizationPercentage, image, pullPolicy (+30 more)
+Nodes (39): values.yaml, autoscaling, enabled, maxReplicas, minReplicas, targetCPUUtilizationPercentage, targetMemoryUtilizationPercentage, image (+31 more)
 
-### Community 4 - "customer.service.js"
-Cohesion: 0.13
-Nodes (28): dec(), decAll(), deleteCustomer(), getAppointmentsByCustomerId(), getCustomerById(), getCustomers(), getLoyaltyBalance(), updateCustomerProfile() (+20 more)
-
-### Community 5 - "output/frontend/package.json"
-Cohesion: 0.08
-Nodes (35): dependencies, axios@^0.27.2, @headlessui/react@^1.6.0, react@^17.0.2, react-datepicker@^4.8.0, react-dom@^17.0.2, react-hot-toast@^2.3.0, react-router-dom@^6.3.0 (+27 more)
-
-### Community 6 - "containers"
+### Community 4 - "containers"
 Cohesion: 0.06
-Nodes (34): env, image, livenessProbe, name, ports, readinessProbe, resources, apiVersion (+26 more)
+Nodes (35): deployment.yaml, env, image, livenessProbe, name, ports, readinessProbe, resources (+27 more)
 
-### Community 7 - "routes/staff.js"
-Cohesion: 0.07
-Nodes (17): createStaff(), deleteStaff(), getPublicStaff(), getStaff(), getStaffById(), getStaffSchedule(), updateStaff(), mongoIdParam (+9 more)
-
-### Community 8 - "app.js"
-Cohesion: 0.09
-Nodes (15): app, __dirname, limiter, httpLogger, requestId(), corsOptions, apiRateLimit, authRateLimit (+7 more)
-
-### Community 9 - "qatar"
-Cohesion: 0.07
-Nodes (26): failover, enabled, failoverThreshold, healthCheckInterval, location, mongodb, name, primary (+18 more)
-
-### Community 10 - "ref_react"
-Cohesion: 0.11
-Nodes (6): BookingConfirmation(), IcalLink(), AuthContext, localizer, ServiceBrowser(), useStyles
-
-### Community 11 - "spec"
-Cohesion: 0.08
-Nodes (24): apiVersion, kind, metadata, name, namespace, name, pods, resource (+16 more)
-
-### Community 12 - "supabase.js"
-Cohesion: 0.20
-Nodes (8): ReviewController, supabase, authenticate(), authenticateCustomer(), authorize(), resolveToken(), stripe, router
-
-### Community 13 - "routes/index.js"
-Cohesion: 0.10
-Nodes (11): router, router, router, router, router, router, router, router (+3 more)
-
-### Community 14 - "ref_express"
-Cohesion: 0.10
-Nodes (10): getAvailableSlots(), toMinutes(), toTimeStr(), router, router, router, router, router (+2 more)
-
-### Community 15 - "with"
-Cohesion: 0.09
-Nodes (22): environment, runs-on, steps, jobs, deploy, name, on, push (+14 more)
-
-### Community 16 - "annotations"
-Cohesion: 0.09
-Nodes (21): cert-manager.io/cluster-issuer, kubernetes.io/ingress.class, nginx.ingress.kubernetes.io/proxy-body-size, nginx.ingress.kubernetes.io/rate-limit, apiVersion, paths, kind, metadata (+13 more)
-
-### Community 17 - "twilio.js"
-Cohesion: 0.18
-Nodes (16): getUpsell(), UPSELL_RULES, openai, conversationState, log, tools, cancelEnquiryFollowup(), canSendFollowup() (+8 more)
-
-### Community 18 - "routes/services.js"
-Cohesion: 0.15
-Nodes (11): buildImageUrl(), createService(), deleteService(), getServiceById(), getServices(), updateService(), api, createAppointment() (+3 more)
-
-### Community 19 - "steps"
-Cohesion: 0.11
-Nodes (19): runs-on, steps, strategy, jobs, build-and-push, sync-database, region, name (+11 more)
-
-### Community 20 - "frontend/src/App.jsx"
-Cohesion: 0.29
-Nodes (12): App(), Header(), useAuth(), BookingFlow(), isUAEWeekend(), Spinner(), STEP_LABELS, TimeSelector() (+4 more)
-
-### Community 21 - "services"
-Cohesion: 0.11
-Nodes (18): fromService, generateValue, key, sync, value, name, property, type (+10 more)
-
-### Community 22 - "executor.js"
-Cohesion: 0.24
-Nodes (14): askClaude(), BASE_FOLDERS, DEFAULT_PACKAGE_JSON, __dirname, ensureOutputDir(), fileExists(), generateReadme(), OUTPUT_DIR (+6 more)
-
-### Community 23 - "appointmentsController.js"
-Cohesion: 0.22
-Nodes (13): cancelAppointment(), createAppointment(), getAllAppointments(), getMyAppointments(), getOneAppointment(), publicCreateAppointment(), rescheduleAppointment(), updateStatus() (+5 more)
-
-### Community 24 - "compilerOptions"
-Cohesion: 0.11
-Nodes (17): compilerOptions, allowJs, allowSyntheticDefaultImports, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib (+9 more)
-
-### Community 25 - "ref_dotenv"
-Cohesion: 0.15
-Nodes (13): cloudinary@^2.9.0, cloudinary, FINAL, run(), upload(), RETRY_IMAGES, run(), uploadToCloudinary() (+5 more)
-
-### Community 26 - "server.js"
-Cohesion: 0.23
-Nodes (11): client, sendDailySummary(), startDailySummaryJob(), startReminderJob(), start(), client, sendBookingConfirmation(), sendCancellation() (+3 more)
-
-### Community 27 - "mongoose"
-Cohesion: 0.12
-Nodes (10): mongoose, reviewSchema, Tenant, tenantSchema, TenantSubscriptionSchema, PosTerminal, posTerminalSchema, mongoose (+2 more)
-
-### Community 28 - "followupWorker.js"
-Cohesion: 0.20
-Nodes (9): createLogger(), bullConnection, cacheClient, isSecure, log, worker, followupWorker, log (+1 more)
-
-### Community 29 - "cron/backup.js"
-Cohesion: 0.20
-Nodes (7): backupTable(), ensureBucket(), log, pruneOldBackups(), runBackup(), startBackupJob(), TABLES
-
-### Community 30 - "askDeepSeek"
-Cohesion: 0.22
-Nodes (8): askDeepSeek(), client, run(), run(), args, daysArg, files, LOG_DIR
-
-### Community 31 - "App.tsx"
-Cohesion: 0.19
-Nodes (8): web-vitals@^2.1.4, App(), BookingData, Service, Staff, root, reportWebVitals(), web-vitals
-
-### Community 32 - "frontend/src/pages/AdminDashboard.jsx"
-Cohesion: 0.30
-Nodes (13): AdminDashboard(), BreakModal(), COLORS, KPICard(), localizer, Modal(), OfferModal(), ServiceModal() (+5 more)
-
-### Community 33 - "dependencies"
+### Community 5 - "customer.service.js"
 Cohesion: 0.14
-Nodes (14): dependencies, @anthropic-ai/sdk@^0.30.0, helmet@^8.1.0, jsonwebtoken@^9.0.2, openai@^4.104.0, @sparticuz/chromium@^143.0.4, @supabase/supabase-js@^2.49.0, winston@^3.19.0 (+6 more)
+Nodes (33): customersController.js, dec(), decAll(), deleteCustomer(), getAppointmentsByCustomerId(), getCustomerById(), getCustomers(), getLoyaltyBalance() (+25 more)
 
-### Community 34 - "routes/packages.js"
-Cohesion: 0.29
-Nodes (8): createPackage(), getMyPackages(), getPackages(), purchasePackage(), updatePackage(), useSession(), router, router
+### Community 6 - "qatar"
+Cohesion: 0.07
+Nodes (27): regions.yaml, failover, enabled, failoverThreshold, healthCheckInterval, location, mongodb, name (+19 more)
 
-### Community 35 - "utils/loyaltyEngine.js"
+### Community 7 - "spec"
+Cohesion: 0.08
+Nodes (25): hpa.yaml, apiVersion, kind, metadata, name, namespace, name, pods (+17 more)
+
+### Community 8 - "supabase.js"
+Cohesion: 0.11
+Nodes (24): controllers/loyalty.js, getBalance(), getTransactions(), redeemPoints(), reviewController.js, ReviewController, supabase.js, supabase (+16 more)
+
+### Community 9 - "routes/index.js"
+Cohesion: 0.22
+Nodes (24): middleware/auth.js, authenticate(), authenticateCustomer(), authorize(), resolveToken(), express, ref_stripe, categories.js (+16 more)
+
+### Community 10 - "annotations"
+Cohesion: 0.09
+Nodes (22): ingress.yaml, cert-manager.io/cluster-issuer, kubernetes.io/ingress.class, nginx.ingress.kubernetes.io/proxy-body-size, nginx.ingress.kubernetes.io/rate-limit, apiVersion, paths, kind (+14 more)
+
+### Community 11 - "server.js"
+Cohesion: 0.16
+Nodes (21): cron/backup.js, backupTable(), ensureBucket(), log, pruneOldBackups(), runBackup(), startBackupJob(), TABLES (+13 more)
+
+### Community 12 - "steps"
+Cohesion: 0.11
+Nodes (20): deploy-multiregion.yml, runs-on, steps, strategy, jobs, build-and-push, sync-database, region (+12 more)
+
+### Community 13 - "dependencies"
+Cohesion: 0.10
+Nodes (20): dependencies, @aws-sdk/client-s3@^3.1025.0, @aws-sdk/lib-storage@^3.1025.0, bcryptjs@^2.4.3, dotenv@^16.4.5, exceljs@^4.4.0, express@^4.19.2, jsonwebtoken@^9.0.2 (+12 more)
+
+### Community 14 - "package.json"
+Cohesion: 0.11
+Nodes (19): package.json, @anthropic-ai/sdk@^0.30.0, compression@^1.8.1, handlebars@^4.7.9, nodemailer@^8.0.4, prom-client@^15.1.3, puppeteer-core@^24.40.0, devDependencies (+11 more)
+
+### Community 15 - "queue.js"
+Cohesion: 0.12
+Nodes (19): bullmq@^5.73.0, bullmq, test-redis-connection.js, run(), queue.js, addToQueue(), analyticsQueue, closeQueues() (+11 more)
+
+### Community 16 - "services"
+Cohesion: 0.11
+Nodes (19): render.yaml, fromService, generateValue, key, sync, value, name, property (+11 more)
+
+### Community 17 - "compilerOptions"
+Cohesion: 0.11
+Nodes (18): tsconfig.json, compilerOptions, allowJs, allowSyntheticDefaultImports, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx (+10 more)
+
+### Community 18 - "dependencies"
+Cohesion: 0.12
+Nodes (17): dependencies, axios@^1.14.0, react-dom@^19.2.4, @testing-library/user-event@^13.5.0, @types/jest@^27.5.2, @types/node@^16.18.126, @types/react@^19.2.14, @types/react-dom@^19.2.3 (+9 more)
+
+### Community 19 - "leadQualification.js"
+Cohesion: 0.24
+Nodes (16): twilio@^5.13.1, twilio, leadQualification.js, cancelEnquiryFollowup(), canSendFollowup(), classifyLead(), log, markLeadConverted() (+8 more)
+
+### Community 20 - "app.js"
+Cohesion: 0.16
+Nodes (15): app.js, app, __dirname, limiter, logging.js, httpLogger, requestId(), skip() (+7 more)
+
+### Community 21 - "twilio.js"
 Cohesion: 0.18
-Nodes (7): Customer, customerSchema, mongoose, LoyaltyTransactionSchema, mongoose, applyLoyaltyEarn(), pointsEarned()
+Nodes (14): upsells.js, getUpsell(), UPSELL_RULES, defaults.js, DEFAULT_BRANCH_ID, DEFAULT_TENANT_ID, twilio.js, checkStaffAvailability() (+6 more)
 
-### Community 36 - "output/utils/loyaltyEngine.js"
+### Community 22 - "salon-booking-demo/package.json"
+Cohesion: 0.19
+Nodes (13): salon-booking-demo/package.json, react-scripts@5.0.1, devDependencies, autoprefixer@^10.4.19, postcss@^8.4.38, tailwindcss@^3.4.17, autoprefixer, postcss (+5 more)
+
+### Community 23 - "loyaltyEngine.js"
 Cohesion: 0.18
-Nodes (7): Customer, customerSchema, mongoose, LoyaltyTransactionSchema, mongoose, applyLoyaltyEarn(), pointsEarned()
+Nodes (13): Customer.js, Customer, customerSchema, mongoose, LoyaltyTransaction.js, LoyaltyTransactionSchema, mongoose, loyaltyEngine.js (+5 more)
 
-### Community 37 - "output/routes/reviews.js"
-Cohesion: 0.15
-Nodes (5): router, router, generateReceipt(), Receipt, ReceiptSchema
+### Community 24 - "appointmentsController.js"
+Cohesion: 0.32
+Nodes (12): appointmentsController.js, cancelAppointment(), createAppointment(), getAllAppointments(), getMyAppointments(), getOneAppointment(), publicCreateAppointment(), rescheduleAppointment() (+4 more)
 
-### Community 38 - "routes/branches.js"
-Cohesion: 0.33
-Nodes (8): checkAvailability(), createBranch(), deleteBranch(), getBranchById(), getBranches(), updateBranch(), router, router
-
-### Community 39 - "frontend/src/main.jsx"
+### Community 25 - "tenantRateLimit.js"
 Cohesion: 0.18
-Nodes (5): AuthContext, AuthProvider(), decodeUser(), LangContext, LangProvider()
+Nodes (12): tenantRateLimit.js, apiRateLimit, authRateLimit, bookingRateLimit, createTenantRateLimit(), makeStore(), express-rate-limit@^8.3.2, ioredis@^5.10.1 (+4 more)
 
-### Community 40 - "frontend/src/pages/ServiceBrowser.jsx"
-Cohesion: 0.33
-Nodes (9): useLang(), useScrollReveal(), useStaggerReveal(), REVIEWS, ServiceBrowser(), ServiceCard(), SkeletonCard(), StaffCard() (+1 more)
-
-### Community 41 - "utils/availability.js"
+### Community 26 - "utils/availability.js"
 Cohesion: 0.20
-Nodes (7): branchSchema, mongoose, mongoose, Staff, staffSchema, getAvailableSlots(), isSlotAvailable()
+Nodes (12): models_appointment_appointment, Branch.js, models_branch_branch, branchSchema, mongoose, Staff.js, mongoose, Staff (+4 more)
 
-### Community 42 - "routes/analytics.js"
+### Community 27 - "ref_mongoose"
+Cohesion: 0.17
+Nodes (12): PosTerminal.js, PosTerminal, posTerminalSchema, Service.js, mongoose, serviceSchema, ServiceCategory.js, mongoose (+4 more)
+
+### Community 28 - "analytics.js"
 Cohesion: 0.33
-Nodes (9): getAIPerformance(), getAppointmentAnalytics(), getCustomerSummary(), getGuestConversion(), getRevenueAnalytics(), getStaffCommission(), getStaffPerformance(), getTopServices() (+1 more)
+Nodes (11): analyticsController.js, getAIPerformance(), getAppointmentAnalytics(), getCustomerSummary(), getGuestConversion(), getRevenueAnalytics(), getStaffCommission(), getStaffPerformance() (+3 more)
 
-### Community 44 - "dependencies"
-Cohesion: 0.18
-Nodes (11): dependencies, @aws-sdk/lib-storage@^3.1025.0, cors@^2.8.5, handlebars@^4.7.9, jsonwebtoken@^9.0.0, mongoose@^7.0.0, stripe@^14.0.0, @aws-sdk/lib-storage (+3 more)
-
-### Community 46 - "package.json"
-Cohesion: 0.20
-Nodes (10): bcryptjs@^2.4.3, morgan@^1.10.0, devDependencies, daisyui@^4.12.10, bcryptjs, morgan, name, type (+2 more)
-
-### Community 47 - "queue.js"
-Cohesion: 0.18
-Nodes (8): analyticsQueue, deadLetterQueue, defaultJobOptions, emailQueue, followupQueue, reportQueue, webhookRetryQueue, whatsappQueue
-
-### Community 48 - "output/package.json"
-Cohesion: 0.20
-Nodes (9): dotenv@^16.0.0, rate-limit-redis@^4.3.1, description, dotenv, rate-limit-redis, main, name, type (+1 more)
-
-### Community 49 - "staffSchedules.js"
+### Community 29 - "staff.js"
 Cohesion: 0.36
-Nodes (7): DAYS, getAllSchedules(), getMySchedule(), getStaffSchedule(), updateMySchedule(), upsertStaffSchedule(), router
+Nodes (10): staffController.js, createStaff(), deleteStaff(), getPublicStaff(), getStaff(), getStaffById(), getStaffSchedule(), updateStaff() (+2 more)
 
-### Community 51 - "routes/offers.js"
+### Community 30 - "queueDashboard.js"
+Cohesion: 0.20
+Nodes (10): @bull-board/api@^6.20.6, @bull-board/express@^6.20.6, @bull-board/api, @bull-board/express, queueDashboard.js, redisConnection, remindersQueue, reportsQueue (+2 more)
+
+### Community 31 - "routes/branches.js"
+Cohesion: 0.39
+Nodes (9): controllers/branches.js, checkAvailability(), createBranch(), deleteBranch(), getBranchById(), getBranches(), updateBranch(), routes/branches.js (+1 more)
+
+### Community 32 - "routes/packages.js"
+Cohesion: 0.39
+Nodes (9): controllers/packages.js, createPackage(), getMyPackages(), getPackages(), purchasePackage(), updatePackage(), useSession(), routes/packages.js (+1 more)
+
+### Community 33 - "services.js"
+Cohesion: 0.39
+Nodes (9): serviceController.js, buildImageUrl(), createService(), deleteService(), getServiceById(), getServices(), updateService(), services.js (+1 more)
+
+### Community 34 - "staffSchedules.js"
+Cohesion: 0.36
+Nodes (9): staffSchedulesController.js, DAYS, getAllSchedules(), getMySchedule(), getStaffSchedule(), updateMySchedule(), upsertStaffSchedule(), staffSchedules.js (+1 more)
+
+### Community 35 - "offers.js"
 Cohesion: 0.43
-Nodes (6): createOffer(), deleteOffer(), getOffers(), updateOffer(), validateOffer(), router
+Nodes (8): offersController.js, createOffer(), deleteOffer(), getOffers(), updateOffer(), validateOffer(), offers.js, router
 
-### Community 52 - "webhooks.js"
+### Community 36 - "webhooks.js"
 Cohesion: 0.43
-Nodes (6): createWebhook(), deleteWebhook(), getWebhookDeliveries(), getWebhooks(), updateWebhook(), router
+Nodes (8): webhookController.js, createWebhook(), deleteWebhook(), getWebhookDeliveries(), getWebhooks(), updateWebhook(), webhooks.js, router
 
-### Community 53 - "manifest.json"
-Cohesion: 0.25
-Nodes (7): background_color, display, icons, name, short_name, start_url, theme_color
-
-### Community 54 - "queueDashboard.js"
-Cohesion: 0.25
-Nodes (5): redisConnection, remindersQueue, reportsQueue, router, serverAdapter
-
-### Community 55 - "routes/pos.js"
-Cohesion: 0.48
-Nodes (5): createTerminal(), deleteTerminal(), getTerminals(), updateTerminal(), router
-
-### Community 56 - "routes/reports.js"
-Cohesion: 0.48
-Nodes (5): createReport(), getReportById(), getReports(), updateReportStatus(), router
-
-### Community 57 - "staffBreaks.js"
-Cohesion: 0.48
-Nodes (5): createBreak(), deleteBreak(), getBreaksByStaff(), getMyBreaks(), router
-
-### Community 58 - "models/Appointment.js"
+### Community 37 - "App.tsx"
 Cohesion: 0.29
-Nodes (3): AppointmentSchema, mongoose, notificationSchema
+Nodes (8): @testing-library/react@^16.3.2, App.tsx, App(), BookingData, Service, Staff, App.test.tsx, @testing-library/react
 
-### Community 60 - "appointmentNotes.js"
-Cohesion: 0.53
-Nodes (4): addNote(), deleteNote(), getNotes(), router
+### Community 38 - "index.tsx"
+Cohesion: 0.32
+Nodes (8): web-vitals@^2.1.4, index.tsx, root, reportWebVitals.ts, reportWebVitals(), ref_react_dom, web-vitals, web-vitals
 
-### Community 61 - "routes/notifications.js"
-Cohesion: 0.53
-Nodes (4): createNotification(), getNotifications(), markSent(), router
+### Community 39 - "manifest.json"
+Cohesion: 0.25
+Nodes (8): manifest.json, background_color, display, icons, name, short_name, start_url, theme_color
 
-### Community 63 - "AIPerformancePage.jsx"
-Cohesion: 0.53
-Nodes (4): AIPerformancePage(), IntentRow(), StatCard(), api
+### Community 40 - "seed_luxury.js"
+Cohesion: 0.25
+Nodes (8): requestId.js, requestId(), @supabase/supabase-js@^2.49.0, ref_crypto, @supabase/supabase-js, seed_luxury.js, seedData(), supabase
 
-### Community 64 - "Chart.yaml"
+### Community 41 - "logger.js"
+Cohesion: 0.29
+Nodes (8): logger.js, consoleFormat, createLogger(), jsonFormat, rotateBase, deadLetterWorker.js, log, worker
+
+### Community 42 - "whatsappWorker.js"
+Cohesion: 0.46
+Nodes (8): whatsapp.js, client, sendBookingConfirmation(), sendCancellation(), sendReminder(), whatsappWorker.js, log, worker
+
+### Community 43 - "routes/pos.js"
+Cohesion: 0.48
+Nodes (7): posController.js, createTerminal(), deleteTerminal(), getTerminals(), updateTerminal(), routes/pos.js, router
+
+### Community 44 - "routes/reports.js"
+Cohesion: 0.48
+Nodes (7): controllers/reports.js, createReport(), getReportById(), getReports(), updateReportStatus(), routes/reports.js, router
+
+### Community 45 - "staffBreaks.js"
+Cohesion: 0.48
+Nodes (7): staffBreaksController.js, createBreak(), deleteBreak(), getBreaksByStaff(), getMyBreaks(), staffBreaks.js, router
+
+### Community 46 - "Appointment.js"
+Cohesion: 0.29
+Nodes (7): noShow.js, startNoShowJob(), Appointment.js, AppointmentSchema, mongoose, Notification.js, notificationSchema
+
+### Community 47 - "RedisCache"
 Cohesion: 0.33
-Nodes (5): apiVersion, appVersion, description, name, version
+Nodes (7): RedisCache, .del(), .get(), .invalidatePattern(), .ping(), .set(), .withCache()
 
-### Community 66 - "output/utils/i18n.js"
-Cohesion: 0.40
-Nodes (3): getNestedValue(), locales, t()
+### Community 48 - "appointmentNotes.js"
+Cohesion: 0.53
+Nodes (6): appointmentNotesController.js, addNote(), deleteNote(), getNotes(), appointmentNotes.js, router
 
-### Community 67 - "logger.js"
+### Community 49 - "availabilityController.js"
+Cohesion: 0.53
+Nodes (6): availabilityController.js, getAvailableSlots(), toMinutes(), toTimeStr(), routes/availability.js, router
+
+### Community 50 - "routes/notifications.js"
+Cohesion: 0.53
+Nodes (6): controllers/notifications.js, createNotification(), getNotifications(), markSent(), routes/notifications.js, router
+
+### Community 51 - "Chart.yaml"
 Cohesion: 0.33
-Nodes (3): consoleFormat, jsonFormat, rotateBase
+Nodes (6): Chart.yaml, apiVersion, appVersion, description, name, version
 
-### Community 69 - "utils/i18n.js"
+### Community 52 - "validate.js"
+Cohesion: 0.33
+Nodes (6): validate.js, mongoIdParam, paginationQuery, validate(), express-validator@^7.2.1, express-validator
+
+### Community 53 - "RegionSyncService"
 Cohesion: 0.40
-Nodes (3): getNestedValue(), locales, t()
+Nodes (6): regionSync.js, RegionSyncService, .constructor(), .queueRetry(), .resolveConflict(), .syncAppointment()
 
-### Community 72 - "namespace.yaml"
-Cohesion: 0.40
-Nodes (4): apiVersion, kind, metadata, name
-
-### Community 73 - "auditLog.js"
+### Community 54 - "routes/metrics.js"
 Cohesion: 0.50
-Nodes (3): audit(), sanitize(), SENSITIVE_FIELDS
+Nodes (5): metricsController.js, getHealth(), getMetrics(), routes/metrics.js, router
 
-### Community 74 - "models/Package.js"
+### Community 55 - "scripts"
 Cohesion: 0.40
-Nodes (4): CustomerPackage, CustomerPackageSchema, Package, PackageSchema
+Nodes (5): scripts, build, eject, start, test
 
-### Community 75 - "output/models/Offer.js"
+### Community 56 - "namespace.yaml"
+Cohesion: 0.40
+Nodes (5): namespace.yaml, apiVersion, kind, metadata, name
+
+### Community 57 - "auditLog.js"
 Cohesion: 0.50
-Nodes (3): Offer, offerSchema, router
+Nodes (5): auditLog.js, audit(), createSystemAuditLog(), sanitize(), SENSITIVE_FIELDS
 
-### Community 76 - "output/models/Package.js"
+### Community 58 - "helmet"
 Cohesion: 0.40
-Nodes (4): CustomerPackage, CustomerPackageSchema, Package, PackageSchema
+Nodes (5): securityHeaders.js, configureSecurityHeaders(), corsOptions, helmet@^8.1.0, helmet
 
-### Community 80 - "ipWhitelist.js"
+### Community 59 - "Package.js"
+Cohesion: 0.40
+Nodes (5): Package.js, CustomerPackage, CustomerPackageSchema, Package, PackageSchema
+
+### Community 60 - "tenantFilter.js"
+Cohesion: 0.40
+Nodes (5): ref_http_errors, tenantFilter.js, addTenantFilter(), checkLimit(), requirePlanFeature()
+
+### Community 61 - "receipt.js"
+Cohesion: 0.40
+Nodes (5): receipt.js, formatReceiptText(), generateReceipt(), Receipt, ReceiptSchema
+
+### Community 62 - "loyaltyExpiry.js"
+Cohesion: 0.50
+Nodes (4): loyaltyExpiry.js, startLoyaltyExpiryJob(), ref_models_customer_js, ref_models_loyaltytransaction_js
+
+### Community 63 - "extends"
+Cohesion: 0.50
+Nodes (4): eslintConfig, extends, react-app, react-app/jest
+
+### Community 64 - "cache.js"
+Cohesion: 0.50
+Nodes (4): cache.js, cache, cacheInvalidate(), cacheResponse()
+
+### Community 65 - "vatCalculator.js"
+Cohesion: 0.50
+Nodes (4): vatCalculator.js, calculateVAT(), extractVAT(), formatAED()
+
+### Community 66 - "analyticsWorker.js"
+Cohesion: 0.50
+Nodes (4): analyticsWorker.js, TODO: Implement your logic here to aggregate daily revenue, TODO: Implement your logic here to aggregate tenant overview, TODO: Invalidate cached analytics data in Redis
+
+### Community 67 - "browserslist"
 Cohesion: 0.67
-Nodes (3): ADMIN_IP_WHITELIST, ipWhitelistMiddleware(), isPrivateIp()
+Nodes (3): browserslist, development, production
 
-### Community 82 - "scripts"
-Cohesion: 0.50
-Nodes (4): scripts, dev, healthcheck, start
+### Community 68 - "@testing-library/jest-dom"
+Cohesion: 0.67
+Nodes (3): @testing-library/jest-dom@^6.9.1, setupTests.ts, @testing-library/jest-dom
 
-### Community 95 - "scripts"
+### Community 69 - "tailwindcss"
+Cohesion: 0.67
+Nodes (3): salon-booking-demo/tailwind.config.js, frontend/tailwind.config.js, tailwindcss
+
+### Community 70 - "Offer.js"
+Cohesion: 0.67
+Nodes (3): Offer.js, Offer, offerSchema
+
+### Community 71 - "Review.js"
+Cohesion: 0.67
+Nodes (3): Review.js, mongoose, reviewSchema
+
+### Community 72 - "Tenant.js"
+Cohesion: 0.67
+Nodes (3): Tenant.js, Tenant, tenantSchema
+
+### Community 73 - "scripts"
 Cohesion: 0.67
 Nodes (3): scripts, build, start
 
+### Community 74 - "react@^19.2.4"
+Cohesion: 1.00
+Nodes (2): react@^19.2.4, react
+
+### Community 75 - "react-router-dom@^7.14.0"
+Cohesion: 1.00
+Nodes (2): react-router-dom@^7.14.0, react-router-dom
+
+### Community 76 - "@testing-library/dom@^10.4.1"
+Cohesion: 1.00
+Nodes (2): @testing-library/dom@^10.4.1, @testing-library/dom
+
+### Community 77 - "i18n.config.js"
+Cohesion: 1.00
+Nodes (2): i18n.config.js, i18nConfig
+
+### Community 78 - ".mcp.json"
+Cohesion: 1.00
+Nodes (2): .mcp.json, supabase
+
+### Community 79 - "cron/reports.js"
+Cohesion: 1.00
+Nodes (1): cron/reports.js
+
+### Community 80 - "salon-booking-demo/postcss.config.js"
+Cohesion: 1.00
+Nodes (1): salon-booking-demo/postcss.config.js
+
+### Community 81 - "react-app-env.d.ts"
+Cohesion: 1.00
+Nodes (1): react-app-env.d.ts
+
+### Community 82 - "frontend/postcss.config.js"
+Cohesion: 1.00
+Nodes (1): frontend/postcss.config.js
+
+### Community 83 - "widget.js"
+Cohesion: 1.00
+Nodes (1): widget.js
+
+### Community 84 - "AuditLog.js"
+Cohesion: 1.00
+Nodes (1): AuditLog.js
+
+### Community 85 - "Report.js"
+Cohesion: 1.00
+Nodes (1): Report.js
+
+### Community 86 - "Webhook.js"
+Cohesion: 1.00
+Nodes (1): Webhook.js
+
+### Community 87 - "WebhookDelivery.js"
+Cohesion: 1.00
+Nodes (1): WebhookDelivery.js
+
+### Community 88 - "init-shards.js"
+Cohesion: 1.00
+Nodes (1): init-shards.js
+
+### Community 89 - "scripts/backup.js"
+Cohesion: 1.00
+Nodes (1): scripts/backup.js
+
+### Community 90 - "healthCheck.js"
+Cohesion: 1.00
+Nodes (1): healthCheck.js
+
+### Community 91 - "mongo-init.js"
+Cohesion: 1.00
+Nodes (1): mongo-init.js
+
+### Community 92 - "verifyBackup.js"
+Cohesion: 1.00
+Nodes (1): verifyBackup.js
+
+### Community 93 - "alerting.js"
+Cohesion: 1.00
+Nodes (1): alerting.js
+
+### Community 94 - "utils/metrics.js"
+Cohesion: 1.00
+Nodes (1): utils/metrics.js
+
+### Community 95 - "reportGenerator.js"
+Cohesion: 1.00
+Nodes (1): reportGenerator.js
+
+### Community 96 - "sessionStore.js"
+Cohesion: 1.00
+Nodes (1): sessionStore.js
+
+### Community 97 - "slowQueryPlugin.js"
+Cohesion: 1.00
+Nodes (1): slowQueryPlugin.js
+
+### Community 98 - "webhookDispatcher.js"
+Cohesion: 1.00
+Nodes (1): webhookDispatcher.js
+
+### Community 99 - "reportWorker.js"
+Cohesion: 1.00
+Nodes (1): reportWorker.js
+
+### Community 100 - "webhookRetryWorker.js"
+Cohesion: 1.00
+Nodes (1): webhookRetryWorker.js
+
 ## Knowledge Gaps
 - **2 isolated node(s):** `react-app`, `react-app/jest`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 534 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **91 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 364 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `mongoose` connect `mongoose` to `output/cron/reminders.js`, `routes/staff.js`, `utils/loyaltyEngine.js`, `output/utils/loyaltyEngine.js`, `output/routes/reviews.js`, `utils/availability.js`, `dependencies`, `output/package.json`, `models/Appointment.js`, `cron/loyaltyExpiry.js`, `RegionSyncService`, `models/Package.js`, `output/models/Offer.js`, `output/models/Package.js`, `output/server.js`, `utils/receipt.js`, `models/Offer.js`, `models/PosTerminal.js`, `models/Service.js`, `models/ServiceCategory.js`, `output/models/Service.js`, `output/models/ServiceCategory.js`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Why does `supabase` connect `supabase.js` to `App.jsx`, `executor.js`, `customer.service.js`, `routes/index.js`, `server.js`, `leadQualification.js`, `twilio.js`, `appointmentsController.js`, `analytics.js`, `staff.js`, `routes/branches.js`, `routes/packages.js`, `services.js`, `staffSchedules.js`, `offers.js`, `webhooks.js`, `logger.js`, `whatsappWorker.js`, `routes/pos.js`, `routes/reports.js`, `staffBreaks.js`, `appointmentNotes.js`, `availabilityController.js`, `routes/notifications.js`, `routes/metrics.js`, `auditLog.js`?**
+  _High betweenness centrality (0.121) - this node is a cross-community bridge._
+- **Are the 23 inferred relationships involving `authenticate()` (e.g. with `analytics.js` and `appointmentNotes.js`) actually correct?**
+  _`authenticate()` has 23 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `react-app`, `react-app/jest` to the rest of the system?**
   _2 weakly-connected nodes found - possible missing edges._
-- **Should `salon-booking-demo/package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.050072568940493466 - nodes in this community are weakly interconnected._
-- **Why does `supabase` connect `supabase.js` to `customer.service.js`, `routes/staff.js`, `routes/index.js`, `ref_express`, `twilio.js`, `routes/services.js`, `appointmentsController.js`, `ref_dotenv`, `server.js`, `followupWorker.js`, `cron/backup.js`, `routes/packages.js`, `routes/branches.js`, `routes/analytics.js`, `staffSchedules.js`, `routes/offers.js`, `webhooks.js`, `routes/pos.js`, `routes/reports.js`, `staffBreaks.js`, `appointmentNotes.js`, `routes/notifications.js`, `routes/metrics.js`, `auditLog.js`, `ipWhitelist.js`?**
-  _High betweenness centrality (0.091) - this node is a cross-community bridge._
-- **Should `frontend/package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.05851063829787234 - nodes in this community are weakly interconnected._
-- **Why does `@testing-library/react` connect `salon-booking-demo/package.json` to `App.tsx`?**
-  _High betweenness centrality (0.074) - this node is a cross-community bridge._
-- **Should `output/cron/reminders.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.05353535353535353 - nodes in this community are weakly interconnected._
+- **Should `App.jsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.06846846846846846 - nodes in this community are weakly interconnected._
+- **Why does `node-cron` connect `server.js` to `Appointment.js`, `loyaltyExpiry.js`, `package.json`?**
+  _High betweenness centrality (0.116) - this node is a cross-community bridge._
+- **Should `executor.js` be split into smaller, more focused modules?**
+  _Cohesion score 0.053075396825396824 - nodes in this community are weakly interconnected._
+- **Why does `dotenv` connect `executor.js` to `App.jsx`, `customer.service.js`, `supabase.js`, `routes/index.js`, `seed_luxury.js`, `server.js`, `dependencies`, `package.json`, `queue.js`?**
+  _High betweenness centrality (0.097) - this node is a cross-community bridge._
 ## Build scope
 
-AST-only extraction of 272 code files. Documents and media were not semantically extracted. Community names use deterministic hub labels. No LLM or paid API calls were made.
+AST-only extraction of 200 code files. Documents and media were not semantically extracted. Community names use deterministic hub labels. No LLM or paid API calls were made.
 
-Raw pre-build extraction diagnostics (not exported-graph counts): dangling_endpoint_edges=10, self_loop_edges=3, undirected_same_endpoint_collapsed_edges=179. During build, endpoints may be resolved or external import stubs created; edges whose endpoints remain unresolved are dropped and are absent from `graph.json`. The exported graph has no dangling endpoints.
+Raw pre-build extraction diagnostics (not exported-graph counts): dangling_endpoint_edges=6, self_loop_edges=3, undirected_same_endpoint_collapsed_edges=162. During build, endpoints may be resolved or external import stubs created; edges whose endpoints remain unresolved are dropped and are absent from `graph.json`. The exported graph has no dangling endpoints.
