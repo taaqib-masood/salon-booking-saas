@@ -56,6 +56,7 @@ export default function BookingFlow() {
 
   const [step, setStep]               = useState(1);
   const [loading, setLoading]         = useState(false);
+  const [bookingError, setBookingError] = useState('');
   const [serviceDetails, setServiceDetails] = useState(null);
   const [staffList, setStaffList]     = useState([]);
   const [staffLoading, setStaffLoading] = useState(false);
@@ -140,6 +141,7 @@ export default function BookingFlow() {
 
   const handleComplete = async (e) => {
     e.preventDefault();
+    setBookingError('');
     setLoading(true);
     try {
       await axios.post('/api/v1/appointments/book', {
@@ -153,11 +155,13 @@ export default function BookingFlow() {
         phone:       bookingData.phone,
         email:       bookingData.email,
       });
+      setStep(5);
     } catch (err) {
       console.error('Booking failed:', err.response?.data || err.message);
+      setBookingError('We could not complete your reservation. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setStep(5); // success
   };
 
   const calUrl = serviceDetails
@@ -175,6 +179,7 @@ export default function BookingFlow() {
 
   return (
     <div className="max-w-2xl mx-auto py-10 px-4 animate-fade-in">
+      {bookingError && <p role="alert" className="text-red-600 mb-4">{bookingError}</p>}
 
       {/* Progress Bar */}
       {step < 5 && (
