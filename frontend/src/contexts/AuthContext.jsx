@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
@@ -39,12 +39,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (phone, password) => {
-    const { data } = await axios.post('/api/v1/auth/customer/login', { phone, password });
+    const { data } = await api.post('/auth/customer/login', { phone, password });
     _setSession(data.token);
   };
 
   const loginStaff = async (email, password) => {
-    const { data } = await axios.post('/api/v1/auth/staff/login', { email, password });
+    const { data } = await api.post('/auth/staff/login', { email, password });
     _setSession(data.token);
   };
 

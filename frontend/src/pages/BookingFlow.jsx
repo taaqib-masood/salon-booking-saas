@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../contexts';
 import * as htmlToImage from 'html-to-image';
 
@@ -79,7 +79,7 @@ export default function BookingFlow() {
 
   // Fetch service details
   useEffect(() => {
-    axios.get(`/api/v1/services/${bookingData.serviceId}`)
+    api.get(`/services/${bookingData.serviceId}`)
       .then(r => setServiceDetails(r.data))
       .catch(() => setServiceDetails({
         name_en: 'Signature Spa Treatment', duration: 90, price: 550,
@@ -91,7 +91,7 @@ export default function BookingFlow() {
   useEffect(() => {
     if (!serviceDetails?.tenant_id) return;
     setStaffLoading(true);
-    axios.get(`/api/v1/staff/public?tenant_id=${serviceDetails.tenant_id}`)
+    api.get(`/staff/public?tenant_id=${serviceDetails.tenant_id}`)
       .then(r => setStaffList(Array.isArray(r.data) ? r.data : []))
       .catch(() => setStaffList([]))
       .finally(() => setStaffLoading(false));
@@ -113,7 +113,7 @@ export default function BookingFlow() {
     try {
       const params = { service_id: bookingData.serviceId, date: val };
       if (bookingData.staffId) params.staff_id = bookingData.staffId;
-      const { data } = await axios.get('/api/v1/availability/slots', { params });
+      const { data } = await api.get('/availability/slots', { params });
       setAvailableSlots(data.slots || []);
     } catch {
       setAvailableSlots([]);
@@ -144,7 +144,7 @@ export default function BookingFlow() {
     setBookingError('');
     setLoading(true);
     try {
-      await axios.post('/api/v1/appointments/book', {
+      await api.post('/appointments/book', {
         service_id:  bookingData.serviceId,
         staff_id:    bookingData.staffId || undefined,
         date:        bookingData.date,

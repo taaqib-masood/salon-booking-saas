@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import IcalLink from './IcalLink';
 import { useParams } from 'react-router-dom';
 
@@ -11,12 +11,12 @@ const BookingConfirmation = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/v1/appointments/${id}`);
+        const response = await api.get(`/appointments/${id}`);
         setAppointment(response.data);
         // Fetch cancellation policy from public tenant endpoint
         const tenantId = response.data?.tenant_id;
         if (tenantId) {
-          const pub = await axios.get(`/api/v1/tenants/${tenantId}/public`).catch(() => null);
+          const pub = await api.get(`/tenants/${tenantId}/public`).catch(() => null);
           if (pub?.data?.cancellationPolicy) setCancelPolicy(pub.data.cancellationPolicy);
         }
       } catch (error) {
@@ -29,7 +29,7 @@ const BookingConfirmation = () => {
 
   const handleCancel = async () => {
     try {
-      await axios.delete(`/api/v1/appointments/${id}`);
+      await api.delete(`/appointments/${id}`);
       alert('Appointment cancelled successfully');
     } catch (error) {
       console.log('Error cancelling appointment:', error);
