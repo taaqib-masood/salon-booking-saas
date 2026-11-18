@@ -120,8 +120,10 @@ export async function publicCreateAppointment(req, res) {
     // Re-check after insert so concurrent requests cannot all slip past the cap.
     const { count } = await countOpenGuestBookings(phone);
     if (count == null || count > MAX_OPEN_GUEST_BOOKINGS) {
-      await supabase.from('appointments').delete().eq('id', data.id).eq('tenant_id', DEFAULT_TENANT_ID);
-      return res.status(429).json({ error: 'Too many open bookings for this phone number' });
+      const { error: delError } = await supabase.from('appointments').delete().eq('id', data.id).eq('tenant_id', DEFAULT_TENANT_ID);
+      // If rollback fails the booking still exists, so report it truthfully instead of a 429.
+      if (!delError) return res.status(429).json({ error: 'Too many open bookings for this phone number' });
+      console.error('[Booking] Failed to roll back over-cap guest booking:', delError.message);
     }
   }
 

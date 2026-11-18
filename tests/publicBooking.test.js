@@ -44,7 +44,7 @@ const { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } = await import('../lib/defaults.j
 async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], staffError = null,
   customerId, customer = { id: customerId, name: 'Stored Name', phone: '+971500000001' }, customerError = null,
   sessionCustomer = customerId ? { id: customerId } : undefined, openGuestBookings = 0,
-  postInsertCount = openGuestBookings + 1, guest = {} } = {}) {
+  postInsertCount = openGuestBookings + 1, deleteError = null, guest = {} } = {}) {
   queries = [];
   inserted = undefined;
   deleted = undefined;
@@ -55,7 +55,7 @@ async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], sta
     staff: [{ data: staff, error: staffError }],
     appointments: [...(customerId ? [] : [{ count: openGuestBookings }]),
       { data: bookings.map(booking => ({ time_slot: '10:00:00', end_time: '11:00:00', ...booking })) },
-      { data: { id: 'appointment' } }, ...(customerId ? [] : [{ count: postInsertCount }])]
+      { data: { id: 'appointment' } }, ...(customerId ? [] : [{ count: postInsertCount }, { error: deleteError }])]
   };
   const res = {
     code: 200,
@@ -149,6 +149,12 @@ test('concurrent bookings that push a phone past the cap are rolled back', async
   const res = await book({ openGuestBookings: 2, postInsertCount: 4 });
   assert.equal(res.code, 429);
   assert.ok(deleted.filters.some(filter => JSON.stringify(filter) === JSON.stringify(['id', 'appointment'])));
+});
+
+test('a failed rollback reports the booking that still exists', async () => {
+  const res = await book({ openGuestBookings: 2, postInsertCount: 4, deleteError: { message: 'db down' } });
+  assert.equal(res.code, 201);
+  assert.equal(queued.length, 0);
 });
 
 test('logged-in customer bookings confirm and message only the stored phone', async () => {
