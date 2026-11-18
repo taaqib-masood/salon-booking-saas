@@ -34,7 +34,8 @@ const { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } = await import('../lib/defaults.j
 
 async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], staffError = null,
   customerId, customer = { id: customerId }, customerError = null,
-  sessionCustomer = customerId ? { id: customerId } : undefined } = {}) {
+  sessionCustomer = customerId ? { id: customerId } : undefined,
+  insertResult = { data: { id: 'appointment' } } } = {}) {
   queries = [];
   inserted = undefined;
   responses = {
@@ -42,7 +43,7 @@ async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], sta
     customers: [{ data: customer, error: customerError }],
     staff: [{ data: staff, error: staffError }],
     appointments: [{ data: bookings.map(booking => ({ time_slot: '10:00:00', end_time: '11:00:00', ...booking })) },
-      { data: { id: 'appointment' } }]
+      insertResult]
   };
   const res = {
     code: 200,
@@ -136,4 +137,10 @@ test('anonymous callers and other customers cannot link a booking to a victim', 
     assert.equal(inserted, undefined);
     assert.equal(queries.length, 0);
   }
+});
+
+test('a concurrent booking rejected by the overlap constraint returns 409', async () => {
+  const res = await book({ staffId: 'stylist-a', insertResult: { data: null, error: { code: '23P01', message: 'conflicting key value' } } });
+  assert.equal(res.code, 409);
+  assert.equal(res.body.error, 'This stylist is already booked at this time');
 });
