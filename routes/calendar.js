@@ -11,6 +11,36 @@ function toICalLocalDate(dateStr, timeStr) {
   return `${y}${mo}${d}T${h.padStart(2,'0')}${m.padStart(2,'0')}00`;
 }
 
+// RFC 5545 §3.3.11 TEXT escaping: user-supplied CR/LF must never start a new property.
+export function escapeICalText(value) {
+  return String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r\n|\r|\n/g, '\\n')
+    .replace(/[\u0000-\u001f\u007f]/g, '');
+}
+
+// RFC 5545 §3.1: fold lines longer than 75 octets without splitting UTF-8 characters.
+export function foldICalLine(line) {
+  const out = [];
+  let current = '';
+  let bytes = 0;
+  for (const ch of line) {
+    const len = Buffer.byteLength(ch);
+    const limit = out.length ? 74 : 75;
+    if (bytes + len > limit) {
+      out.push(current);
+      current = '';
+      bytes = 0;
+    }
+    current += ch;
+    bytes += len;
+  }
+  out.push(current);
+  return out.join('\r\n ');
+}
+
 function toICalDate(date) {
   return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 }
@@ -58,23 +88,24 @@ router.get('/feed.ics', async (req, res) => {
       return `${String(Math.floor((h * 60 + m + dur) / 60)).padStart(2,'0')}:${String((m + dur) % 60).padStart(2,'0')}`;
     })();
 
-    const clientName  = apt.customers?.name  || apt.guest?.name  || 'Guest';
-    const clientPhone = apt.customers?.phone || apt.guest?.phone || '';
-    const staffName   = apt.staff?.name      || 'Staff';
-    const serviceName = apt.services?.name_en || 'Appointment';
+    const clientName  = escapeICalText(apt.customers?.name  || apt.guest?.name  || 'Guest');
+    const clientPhone = escapeICalText(apt.customers?.phone || apt.guest?.phone || '');
+    const staffName   = escapeICalText(apt.staff?.name      || 'Staff');
+    const serviceName = escapeICalText(apt.services?.name_en || 'Appointment');
+    const status      = escapeICalText(apt.status);
 
     return [
       'BEGIN:VEVENT',
-      `UID:apt-${apt.id}@lamaison.ae`,
+      `UID:apt-${escapeICalText(apt.id)}@lamaison.ae`,
       `DTSTAMP:${now}`,
       `DTSTART;TZID=Asia/Dubai:${toICalLocalDate(apt.date, timeSlot)}`,
       `DTEND;TZID=Asia/Dubai:${toICalLocalDate(apt.date, endTime)}`,
       `SUMMARY:${serviceName} – ${clientName}`,
-      `DESCRIPTION:Client: ${clientName}\\nPhone: ${clientPhone}\\nStaff: ${staffName}\\nService: ${serviceName}\\nStatus: ${apt.status}`,
+      `DESCRIPTION:Client: ${clientName}\\nPhone: ${clientPhone}\\nStaff: ${staffName}\\nService: ${serviceName}\\nStatus: ${status}`,
       'LOCATION:La Maison Salon\\, Downtown Dubai',
       `STATUS:${apt.status === 'confirmed' ? 'CONFIRMED' : 'TENTATIVE'}`,
       'END:VEVENT',
-    ].join('\r\n');
+    ];
   });
 
   const icsContent = [
@@ -97,9 +128,9 @@ router.get('/feed.ics', async (req, res) => {
     'DTSTART:19700101T000000',
     'END:STANDARD',
     'END:VTIMEZONE',
-    ...events,
+    ...events.flat(),
     'END:VCALENDAR',
-  ].join('\r\n');
+  ].map(foldICalLine).join('\r\n');
 
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
   res.setHeader('Content-Disposition', 'inline; filename="salon_schedule.ics"');
