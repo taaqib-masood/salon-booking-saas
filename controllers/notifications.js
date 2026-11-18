@@ -19,18 +19,20 @@ export async function getNotifications(req, res) {
 }
 
 export async function createNotification(req, res) {
-  const tenant_id = req.staff.tenant_id;
-  const { type, channel, customer_id, appointment_id, scheduled_at, payload } = req.body;
+  const tenantId = req.staff.tenant_id;
+  const { type, channel, customer_id: customerId, appointment_id: appointmentId,
+    scheduled_at: scheduledAt, payload } = req.body;
 
-  for (const [table, id] of [['customers', customer_id], ['appointments', appointment_id]]) {
+  for (const [table, id] of [['customers', customerId], ['appointments', appointmentId]]) {
     if (!id) continue;
-    const { data: owned } = await supabase.from(table).select('id').eq('id', id).eq('tenant_id', tenant_id).single();
+    const { data: owned } = await supabase.from(table).select('id').eq('id', id).eq('tenant_id', tenantId).single();
     if (!owned) return res.status(400).json({ error: `${table === 'customers' ? 'Customer' : 'Appointment'} not found for this tenant` });
   }
 
   const { data, error } = await supabase
     .from('notifications')
-    .insert({ type, channel, customer_id, appointment_id, scheduled_at, payload, tenant_id })
+    .insert({ type, channel, customer_id: customerId, appointment_id: appointmentId,
+      scheduled_at: scheduledAt, payload, tenant_id: tenantId })
     .select()
     .single();
 
