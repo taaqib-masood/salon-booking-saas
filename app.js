@@ -16,6 +16,8 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
+// Stripe webhooks need the raw body for signature verification; express.json() then skips them.
+app.use(['/api/v1/payments/webhook', '/api/v1/subscriptions/webhook'], express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestId);   // attach req.requestId before logging
