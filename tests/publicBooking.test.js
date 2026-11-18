@@ -33,7 +33,8 @@ const { publicCreateAppointment } = await import('../controllers/appointmentsCon
 const { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } = await import('../lib/defaults.js');
 
 async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], staffError = null,
-  customerId, customer = { id: customerId }, customerError = null } = {}) {
+  customerId, customer = { id: customerId }, customerError = null,
+  sessionCustomer = customerId ? { id: customerId } : undefined } = {}) {
   queries = [];
   inserted = undefined;
   responses = {
@@ -48,7 +49,7 @@ async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], sta
     status(code) { this.code = code; return this; },
     json(body) { this.body = body; return this; }
   };
-  await publicCreateAppointment({ body: {
+  await publicCreateAppointment({ customer: sessionCustomer, body: {
     service_id: 'service', staff_id: staffId, date: '2026-11-08', time_slot: '10:00',
     customer_id: customerId, firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test'
   } }, res);
@@ -126,4 +127,13 @@ test('staff ids and customers outside the tenant are rejected before inserting',
 test('customer lookup errors do not create an appointment', async () => {
   assert.equal((await book({ customerId: 'customer-a', customerError: { message: 'lookup failed' } })).code, 400);
   assert.equal(inserted, undefined);
+});
+
+test('anonymous callers and other customers cannot link a booking to a victim', async () => {
+  for (const sessionCustomer of [null, { id: 'other-customer' }]) {
+    const res = await book({ customerId: 'victim', sessionCustomer });
+    assert.equal(res.code, 403);
+    assert.equal(inserted, undefined);
+    assert.equal(queries.length, 0);
+  }
 });
