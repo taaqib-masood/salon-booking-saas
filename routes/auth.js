@@ -17,6 +17,7 @@ router.post('/staff/login', async (req, res) => {
     .select('id, name, email, role, tenant_id, branch_id, password_hash, is_deleted')
     .eq('email', email.toLowerCase())
     .eq('is_deleted', false)
+    .eq('is_active', true)
     .single();
 
   if (error || !staff) return res.status(401).json({ error: 'Invalid credentials' });
@@ -25,7 +26,7 @@ router.post('/staff/login', async (req, res) => {
   if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
   const token = jwt.sign(
-    { id: staff.id, tenant_id: staff.tenant_id, role: staff.role },
+    { id: staff.id, tenant_id: staff.tenant_id, role: staff.role, type: 'staff' },
     JWT_SECRET,
     { expiresIn: '7d' }
   );
@@ -64,14 +65,14 @@ router.post('/register', async (req, res) => {
 
   const { data: staff, error: staffErr } = await supabase
     .from('staff')
-    .insert({ tenant_id: tenant.id, name, email: email.toLowerCase(), password_hash, role: 'admin' })
+    .insert({ tenant_id: tenant.id, name, email: email.toLowerCase(), password_hash, role: 'admin', is_active: true })
     .select('id, name, email, role, tenant_id')
     .single();
 
   if (staffErr) return res.status(400).json({ error: staffErr.message });
 
   const token = jwt.sign(
-    { id: staff.id, tenant_id: staff.tenant_id, role: staff.role },
+    { id: staff.id, tenant_id: staff.tenant_id, role: staff.role, type: 'staff' },
     JWT_SECRET,
     { expiresIn: '7d' }
   );
