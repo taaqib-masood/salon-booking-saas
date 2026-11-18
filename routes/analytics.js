@@ -13,15 +13,15 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(authenticate, authorize('owner', 'admin', 'manager'));
 
 router.get('/revenue', getRevenueAnalytics);
 router.get('/appointments', getAppointmentAnalytics);
-router.get('/staff/commission', authorize('owner', 'admin', 'manager'), getStaffCommission);
+router.get('/staff/commission', getStaffCommission);
 router.get('/top-services', getTopServices);
-router.get('/customers/summary',    getCustomerSummary);
-router.get('/staff/performance',    authorize('owner', 'admin', 'manager'), getStaffPerformance);
-router.get('/guest-conversion',     authorize('owner', 'admin', 'manager'), getGuestConversion);
-router.get('/ai-performance',       authorize('owner', 'admin', 'manager'), getAIPerformance);
+router.get('/customers/summary', getCustomerSummary);
+router.get('/staff/performance', getStaffPerformance);
+router.get('/guest-conversion', getGuestConversion);
+router.get('/ai-performance', getAIPerformance);
 
 export default router;
