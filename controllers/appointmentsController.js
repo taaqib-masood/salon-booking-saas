@@ -4,6 +4,10 @@ import { whatsappQueue } from '../utils/queue.js';
 import { sendStaffCancellation } from '../utils/whatsapp.js';
 import { getEligibleStylists, getStylistBookings, findAvailableStylist } from '../utils/bookingAvailability.js';
 
+// appointments_staff_no_overlap rejected an overlapping booking (23P01), or concurrent inserts deadlocked on it (40P01)
+const isSlotConflict = (error) => ['23P01', '40P01'].includes(error?.code);
+const SLOT_TAKEN = { error: 'This stylist is already booked at this time' };
+
 // Public endpoint — used by the frontend booking flow for both guests and logged-in customers
 export async function publicCreateAppointment(req, res) {
   const { service_id, staff_id, date, time_slot, customer_id, firstName, lastName, phone, email } = req.body;
@@ -75,6 +79,7 @@ export async function publicCreateAppointment(req, res) {
     .select('id, date, time_slot, status, services(name_en, price)')
     .single();
 
+  if (isSlotConflict(error)) return res.status(409).json(SLOT_TAKEN);
   if (error) return res.status(400).json({ error: error.message });
 
   // Queue WhatsApp confirmation (non-blocking)
@@ -112,6 +117,7 @@ export async function createAppointment(req, res) {
     .select('*, customers(name,phone), staff(name), services(name_en,price,duration), branches(name)')
     .single();
 
+  if (isSlotConflict(error)) return res.status(409).json(SLOT_TAKEN);
   if (error) return res.status(400).json({ error: error.message });
   res.status(201).json(data);
 }
@@ -209,6 +215,7 @@ export async function rescheduleAppointment(req, res) {
     .select()
     .single();
 
+  if (isSlotConflict(error)) return res.status(409).json(SLOT_TAKEN);
   if (error || !data) return res.status(404).json({ error: 'Appointment not found' });
   res.json(data);
 }
