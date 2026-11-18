@@ -124,9 +124,13 @@ export default function AdminDashboard() {
   const [reminderHours, setReminderHours]   = useState(2);
   const [settingsSaving, setSettingsSaving] = useState('');
 
-  const icalUrl = user?.tenant_id
-    ? `${window.location.origin}/api/v1/calendar/feed.ics?tenant_id=${user.tenant_id}`
-    : '';
+  const [icalUrl, setIcalUrl] = useState('');
+  const generateIcalUrl = async () => {
+    try {
+      const { data } = await api.post('/calendar/feed-token');
+      setIcalUrl(`${window.location.origin}/api/v1/calendar/feed.ics?token=${encodeURIComponent(data.token)}`);
+    } catch (e) { console.error(e); }
+  };
 
   // Cleanup debounce timer on unmount
   useEffect(() => () => clearTimeout(saveTimeout.current), []);
@@ -481,16 +485,25 @@ export default function AdminDashboard() {
             <section className="bg-white p-6 rounded-2xl shadow-sm border border-neutral/10">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-serif text-charcoal">{t('schedule')}</h2>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => { navigator.clipboard.writeText(icalUrl); setIcalCopied(true); setTimeout(() => setIcalCopied(false), 2500); }}
-                    className="text-[10px] text-primary uppercase tracking-widest font-bold hover:text-charcoal transition-colors border-b border-primary/30 pb-0.5">
-                    {icalCopied ? t('copied') : t('copyIcalFeed')}
-                  </button>
-                  <a href={gcalImportUrl} target="_blank" rel="noreferrer"
-                    className="text-[10px] text-neutral/50 uppercase tracking-widest hover:text-primary transition-colors">
-                    {t('openInGoogleCal')}
-                  </a>
-                </div>
+                {user?.role === 'admin' && (
+                  <div className="flex items-center gap-3">
+                    {icalUrl ? (<>
+                      <button onClick={() => { navigator.clipboard.writeText(icalUrl); setIcalCopied(true); setTimeout(() => setIcalCopied(false), 2500); }}
+                        className="text-[10px] text-primary uppercase tracking-widest font-bold hover:text-charcoal transition-colors border-b border-primary/30 pb-0.5">
+                        {icalCopied ? t('copied') : t('copyIcalFeed')}
+                      </button>
+                      <a href={gcalImportUrl} target="_blank" rel="noreferrer"
+                        className="text-[10px] text-neutral/50 uppercase tracking-widest hover:text-primary transition-colors">
+                        {t('openInGoogleCal')}
+                      </a>
+                    </>) : (
+                      <button onClick={generateIcalUrl} title={t('generateIcalFeedHint')}
+                        className="text-[10px] text-primary uppercase tracking-widest font-bold hover:text-charcoal transition-colors border-b border-primary/30 pb-0.5">
+                        {t('generateIcalFeed')}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="h-64">
                 <Calendar localizer={localizer} events={calEvents} startAccessor="start" endAccessor="end" className="font-sans text-xs" />
