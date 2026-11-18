@@ -4,6 +4,7 @@ import twilio from 'twilio';
 import { supabase } from '../lib/supabase.js';
 import { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } from '../lib/defaults.js';
 import { createLogger } from '../utils/logger.js';
+import { createConversationStore } from '../utils/conversationStore.js';
 import {
   classifyLead,
   notifyHotLead,
@@ -23,8 +24,10 @@ const openai = process.env.GROQ_API_KEY
   ? new OpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: 'https://api.groq.com/openai/v1' })
   : null;
 
-// In-memory conversation history — key: phone number
-const conversationState = new Map();
+// shortcut: per-process memory, lost on restart and not shared across instances; move to Redis if scaled out.
+const conversations = createConversationStore({ maxEntries: 1000, ttlMs: 30 * 60 * 1000, maxMessages: 12 });
+const MAX_MESSAGE_CHARS = 1600; // Twilio's message body limit
+const MAX_TOOL_ROUNDS   = 3;
 
 // ── Tool: Check availability ──────────────────────────────────────────────────
 async function checkStaffAvailability({ date, staff_name }) {
@@ -186,8 +189,8 @@ const tools = [
 
 // ── Webhook ───────────────────────────────────────────────────────────────────
 router.post('/whatsapp', async (req, res) => {
-  const incomingMsg  = req.body.Body || '';
-  const fromNumber   = req.body.From || '';
+  const incomingMsg  = String(req.body.Body || '').slice(0, MAX_MESSAGE_CHARS);
+  const fromNumber   = String(req.body.From || '').slice(0, 64);
   const customerPhone = fromNumber.replace('whatsapp:', '');
 
   const twiml = new MessagingResponse();
@@ -197,8 +200,7 @@ router.post('/whatsapp', async (req, res) => {
     return res.type('text/xml').send(twiml.toString());
   }
 
-  if (!conversationState.has(fromNumber)) {
-    conversationState.set(fromNumber, [
+  const history = conversations.getOrCreate(fromNumber, () => [
       {
         role: 'system',
         content: `You are Leila, La Maison beauty concierge in Dubai. Warm, human, WhatsApp-style replies.
@@ -209,9 +211,6 @@ Rules: short messages, one question at a time, light emoji, never "Certainly/Abs
 Booking: ask service→staff→check_staff_availability→get name→confirm details→create_appointment→share booking ID. Never promise email/SMS.`,
       },
     ]);
-  }
-
-  const history = conversationState.get(fromNumber);
   history.push({ role: 'user', content: incomingMsg });
 
   // ── Lead classification (async, non-blocking) ─────────────────────────────
@@ -242,7 +241,7 @@ Booking: ask service→staff→check_staff_availability→get name→confirm det
     // ── Handle tool calls (may chain) ─────────────────────────────────────────
     let bookingResult = null;
 
-    while (responseMessage.tool_calls?.length) {
+    for (let round = 0; responseMessage.tool_calls?.length && round < MAX_TOOL_ROUNDS; round++) {
       history.push(responseMessage);
 
       for (const toolCall of responseMessage.tool_calls) {
@@ -277,11 +276,8 @@ Booking: ask service→staff→check_staff_availability→get name→confirm det
       responseMessage = completion.choices[0].message;
     }
 
-    let aiResponse = responseMessage.content || "Sorry, I didn't catch that — could you say it again?";
+    let aiResponse = (!responseMessage.tool_calls?.length && responseMessage.content) || "Sorry, I didn't catch that — could you say it again?";
     history.push({ role: 'assistant', content: aiResponse });
-
-    // Keep history lean (system prompt + last 12 messages)
-    if (history.length > 14) history.splice(1, 2);
 
     // ── Post-booking: convert lead + cancel follow-up + no-show + upsell ─────
     if (bookingResult) {
@@ -312,6 +308,8 @@ Booking: ask service→staff→check_staff_availability→get name→confirm det
   } catch (error) {
     log.error('Concierge error', { error: error.message });
     twiml.message('I apologize, but I am having trouble connecting right now. Please try again in a moment.');
+  } finally {
+    conversations.trim(history);
   }
 
   res.type('text/xml').send(twiml.toString());
