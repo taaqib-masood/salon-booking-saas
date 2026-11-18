@@ -158,7 +158,7 @@ export default function BookingFlow() {
       setStep(5);
     } catch (err) {
       console.error('Booking failed:', err.response?.data || err.message);
-      setBookingError('We could not complete your reservation. Please try again.');
+      setBookingError(err.response?.data?.error || 'We could not complete your reservation. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -390,8 +390,8 @@ export default function BookingFlow() {
               <div className="absolute inset-0 rounded-full animate-ping bg-primary/5 opacity-40" />
             </div>
 
-            <h2 className="text-4xl md:text-5xl font-serif text-charcoal mb-2 tracking-tight">Reservation Confirmed.</h2>
-            <p className="text-2xl font-serif text-primary/40 mb-8" dir="rtl">تم تأكيد حجزك الملكي</p>
+            <h2 className="text-4xl md:text-5xl font-serif text-charcoal mb-2 tracking-tight">{role === 'customer' ? 'Reservation Confirmed.' : 'Reservation Requested.'}</h2>
+            <p className="text-2xl font-serif text-primary/40 mb-8" dir="rtl">{role === 'customer' ? 'تم تأكيد حجزك الملكي' : 'تم استلام طلب حجزك'}</p>
 
             <div className="inline-block px-5 py-2 bg-charcoal text-primary text-[10px] uppercase tracking-[0.3em] font-bold rounded-full mb-10 shadow-lg">
               Ref: {bookingRef}
@@ -400,7 +400,7 @@ export default function BookingFlow() {
             <div className="max-w-md mx-auto mb-12 space-y-4">
               <p className="text-neutral font-light leading-relaxed text-base">
                 Dear <span className="font-semibold text-charcoal">{bookingData.firstName}</span>, your bespoke appointment for{' '}
-                <span className="font-semibold text-charcoal italic">{serviceDetails.name_en}</span> has been secured.
+                <span className="font-semibold text-charcoal italic">{serviceDetails.name_en}</span> {role === 'customer' ? 'has been secured.' : 'has been received. We will confirm it on WhatsApp shortly.'}
               </p>
               <div className="grid grid-cols-3 gap-3 py-6 border-y border-neutral/10 text-center">
                 <div>
