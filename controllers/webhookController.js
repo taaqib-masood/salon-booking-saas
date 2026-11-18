@@ -1,9 +1,12 @@
 import { supabase } from '../lib/supabase.js';
 
+// `secret` is returned only when an owner/admin creates the webhook.
+const WEBHOOK_COLUMNS = 'id, url, events, is_active, stats, created_by, created_at, updated_at';
+
 export async function getWebhooks(req, res) {
   const { data, error } = await supabase
     .from('webhooks')
-    .select('*')
+    .select(WEBHOOK_COLUMNS)
     .eq('tenant_id', req.staff.tenant_id)
     .order('created_at', { ascending: false });
 
@@ -28,7 +31,7 @@ export async function updateWebhook(req, res) {
     .update(req.body)
     .eq('id', req.params.id)
     .eq('tenant_id', req.staff.tenant_id)
-    .select()
+    .select(WEBHOOK_COLUMNS)
     .single();
 
   if (error || !data) return res.status(404).json({ error: 'Webhook not found' });
