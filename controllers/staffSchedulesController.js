@@ -73,7 +73,7 @@ export async function getAllSchedules(req, res) {
 
   const { data, error } = await supabase
     .from('staff_schedules')
-    .select('*, staff(name, role)')
+    .select('*, staff!inner(name, role)')
     .eq('staff.tenant_id', tenant_id)
     .order('staff_id')
     .order('day_of_week');
