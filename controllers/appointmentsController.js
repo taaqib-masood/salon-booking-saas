@@ -4,15 +4,46 @@ import { whatsappQueue } from '../utils/queue.js';
 import { sendStaffCancellation } from '../utils/whatsapp.js';
 import { getEligibleStylists, getStylistBookings, findAvailableStylist } from '../utils/bookingAvailability.js';
 
+const NAME_RE = /^[\p{L}\p{M}' .-]{1,50}$/u;
+const PHONE_RE = /^\+?\d{8,15}$/;
+export const MAX_OPEN_GUEST_BOOKINGS = 3;
+
 // Public endpoint — used by the frontend booking flow for both guests and logged-in customers
 export async function publicCreateAppointment(req, res) {
-  const { service_id, staff_id, date, time_slot, customer_id, firstName, lastName, phone, email } = req.body;
+  const { service_id, staff_id, date, time_slot, customer_id, email } = req.body;
 
   if (!service_id || !date || !time_slot) {
     return res.status(400).json({ error: 'service_id, date, and time_slot are required' });
   }
   if (customer_id && req.customer?.id !== customer_id) {
     return res.status(403).json({ error: 'Cannot book for another customer' });
+  }
+
+  const isGuest = !customer_id;
+  const firstName = String(req.body.firstName ?? '').trim();
+  const lastName = String(req.body.lastName ?? '').trim();
+  const phone = String(req.body.phone ?? '').replace(/[\s().-]/g, '');
+  if (isGuest) {
+    if (!NAME_RE.test(firstName) || !NAME_RE.test(lastName)) {
+      return res.status(400).json({ error: 'First and last name must be 1-50 letters' });
+    }
+    if (!PHONE_RE.test(phone)) return res.status(400).json({ error: 'A valid phone number is required' });
+    if (email != null && (typeof email !== 'string' || email.length > 254)) {
+      return res.status(400).json({ error: 'Invalid email' });
+    }
+
+    const { count, error: openError } = await supabase
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('is_guest', true)
+      .eq('guest->>phone', phone)
+      .in('status', ['pending', 'confirmed'])
+      .gte('date', new Date().toISOString().slice(0, 10));
+    if (openError) return res.status(400).json({ error: openError.message });
+    if (count >= MAX_OPEN_GUEST_BOOKINGS) {
+      return res.status(429).json({ error: 'Too many open bookings for this phone number' });
+    }
   }
 
   // Fetch service for pricing
@@ -25,12 +56,14 @@ export async function publicCreateAppointment(req, res) {
 
   if (svcErr || !service) return res.status(400).json({ error: 'Service not found' });
 
+  let customer;
   if (customer_id) {
-    const { data: customer, error: customerError } = await supabase.from('customers')
-      .select('id')
+    const { data, error: customerError } = await supabase.from('customers')
+      .select('id, name, phone')
       .eq('id', customer_id)
       .eq('tenant_id', DEFAULT_TENANT_ID)
       .single();
+    customer = data;
     if (customerError || !customer) return res.status(400).json({ error: 'Customer not found for this tenant' });
   }
 
@@ -52,8 +85,6 @@ export async function publicCreateAppointment(req, res) {
   const assignedStaff = findAvailableStylist(staff, bookings, time_slot, end_time);
   if (!assignedStaff) return res.status(409).json({ error: 'No eligible stylist is available at this time' });
 
-  const isGuest = !customer_id;
-
   const { data, error } = await supabase
     .from('appointments')
     .insert({
@@ -70,32 +101,34 @@ export async function publicCreateAppointment(req, res) {
       subtotal: price,
       vat_amount: vat,
       total_amount: total,
-      status: 'confirmed',
+      // Guest bookings are unverified, so they wait for staff confirmation before any message is sent.
+      status: isGuest ? 'pending' : 'confirmed',
     })
     .select('id, date, time_slot, status, services(name_en, price)')
     .single();
 
   if (error) return res.status(400).json({ error: error.message });
 
-  // Queue WhatsApp confirmation (non-blocking)
-  const customerPhone = phone || null;
-  const customerName = `${firstName || ''} ${lastName || ''}`.trim();
-  if (customerPhone) {
-    whatsappQueue.add('send_confirmation', {
-      phoneNumber: customerPhone,
-      message: {
-        customerName,
-        serviceName: service.name_en,
-        staffName: 'our team',
-        date,
-        timeSlot: time_slot,
-        totalAmount: total,
-        branch: 'La Maison Dubai',
-      },
-    }).catch((err) => console.error('[WhatsApp Queue] Failed to enqueue confirmation:', err.message));
+  if (customer?.phone) {
+    queueConfirmation(customer.phone, customer.name, service.name_en, date, time_slot, total);
   }
 
   res.status(201).json(data);
+}
+
+function queueConfirmation(phoneNumber, customerName, serviceName, date, timeSlot, totalAmount) {
+  whatsappQueue.add('send_confirmation', {
+    phoneNumber,
+    message: {
+      customerName: customerName || 'Valued Guest',
+      serviceName,
+      staffName: 'our team',
+      date,
+      timeSlot,
+      totalAmount,
+      branch: 'La Maison Dubai',
+    },
+  }).catch((err) => console.error('[WhatsApp Queue] Failed to enqueue confirmation:', err.message));
 }
 
 export async function createAppointment(req, res) {
@@ -181,9 +214,14 @@ export async function updateStatus(req, res) {
 
   if (error || !data) return res.status(404).json({ error: 'Appointment not found' });
 
+  const phone = data.customers?.phone || data.guest?.phone;
+  if (status === 'confirmed' && phone) {
+    queueConfirmation(phone, data.customers?.name || data.guest?.name, data.services?.name_en,
+      data.date, data.time_slot, data.total_amount);
+  }
+
   // Send WhatsApp notification when staff cancels
   if (status === 'cancelled') {
-    const phone = data.customers?.phone || data.guest?.phone;
     const customerName = data.customers?.name || data.guest?.name || 'Valued Guest';
     if (phone) {
       sendStaffCancellation(phone, {

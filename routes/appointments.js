@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 const router = express.Router();
 
 // Import your controllers here
@@ -7,7 +8,14 @@ import { authenticate, authenticateCustomer } from '../middleware/auth.js';
 import notesRouter from './appointmentNotes.js';
 
 // Public: customer-facing booking (no staff auth required)
-router.post('/book', (req, res, next) => req.body.customer_id
+const bookLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many booking attempts, please try again later.' },
+});
+router.post('/book', bookLimiter, (req, res, next) => req.body.customer_id
   ? authenticateCustomer(req, res, next) : next(), publicCreateAppointment);
 
 // Customer-facing: own appointments (must be before /:id)
