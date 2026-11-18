@@ -138,8 +138,11 @@ export async function createAppointment(req, res) {
   }
   discount = +Math.min(discount, subtotal).toFixed(2);
   // Service prices are VAT-exclusive, as in publicCreateAppointment and the services.price_with_vat column.
-  const vat_amount = +calculateVAT(subtotal - discount).vatAmount.toFixed(2);
-  const total_amount = +(subtotal - discount + vat_amount).toFixed(2);
+  // Round in integer fils: float toFixed rounds ties like 2.545 down.
+  const netFils = Math.round((subtotal - discount) * 100);
+  const vatFils = Math.round(calculateVAT(netFils).vatAmount);
+  const vat_amount = vatFils / 100;
+  const total_amount = (netFils + vatFils) / 100;
 
   const { data, error } = await supabase
     .from('appointments')

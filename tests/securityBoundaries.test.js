@@ -19,7 +19,7 @@ mock.module('../lib/supabase.js', { namedExports: { supabase: {
         ? { data: { id: query.filters.id, tenant_id: rowTenant, role } }
         : { data: null, error: { message: 'not found' } };
       if (['customers', 'branches', 'services'].includes(table)) return visible
-        ? { data: { id: query.filters.id, tenant_id: rowTenant, price: 100 } }
+        ? { data: { id: query.filters.id, tenant_id: rowTenant, price: query.filters.id === 'service-5090' ? 50.9 : 100 } }
         : { data: null, error: { message: 'not found' } };
       if (table === 'offers') return query.filters.code === 'SAVE10'
         ? { data: { discount_type: 'percentage', discount_value: 10, used_count: 0, max_uses: 5, min_order_amount: 0, offer_services: [] } }
@@ -111,6 +111,12 @@ test('appointment pricing is computed server-side from the tenant service', asyn
   const res = await createAs(stylistToken, { ...booking, subtotal: 0, vat_amount: 0, total_amount: 0 });
   assert.equal(res.status, 201);
   assert.deepEqual([inserted().subtotal, inserted().vat_amount, inserted().total_amount, inserted().discount_amount], [100, 5, 105, 0]);
+});
+
+test('VAT half-fil ties round up like the catalog price_with_vat', async () => {
+  queries = [];
+  assert.equal((await createAs(stylistToken, { ...booking, service_id: 'service-5090' })).status, 201);
+  assert.deepEqual([inserted().vat_amount, inserted().total_amount], [2.55, 53.45]);
 });
 
 test('only managers and admins can apply manual discounts', async () => {
