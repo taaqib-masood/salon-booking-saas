@@ -299,6 +299,15 @@ export default function AdminDashboard() {
     }, 600);
   };
 
+  const confirmAppointment = async (id) => {
+    try {
+      await api.patch(`/appointments/${id}/status`, { status: 'confirmed' });
+    } catch (err) {
+      window.alert(err.response?.data?.error || 'Could not confirm appointment');
+    }
+    fetchAppointments();
+  };
+
   const cancelAppointment = async (id) => {
     if (!window.confirm(t('deleteConfirm'))) return;
     await api.patch(`/appointments/${id}/status`, { status: 'cancelled' });
@@ -563,6 +572,12 @@ export default function AdminDashboard() {
                           className="text-[10px] text-primary uppercase tracking-widest hover:text-charcoal font-bold">
                           Notes
                         </button>
+                        {a.status === 'pending' && (
+                          <button onClick={() => confirmAppointment(a.id)}
+                            className="text-[10px] text-green-600 uppercase tracking-widest hover:text-green-800 font-bold">
+                            Confirm
+                          </button>
+                        )}
                         {a.status !== 'cancelled' && a.status !== 'completed' && (
                           <button onClick={() => cancelAppointment(a.id)}
                             className="text-[10px] text-red-500 uppercase tracking-widest hover:text-red-700 font-bold">

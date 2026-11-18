@@ -5,6 +5,8 @@ let responses;
 let queries;
 let inserted;
 let queued;
+let deleted;
+process.env.ENCRYPTION_KEY ||= 'a'.repeat(64);
 mock.module('../lib/supabase.js', {
   namedExports: {
     supabase: {
@@ -18,6 +20,10 @@ mock.module('../lib/supabase.js', {
           in() { return chain; },
           lt() { return chain; },
           gte() { return chain; },
+          neq(...args) { query.filters.push(['neq', ...args]); return chain; },
+          update(data) { query.update = data; return chain; },
+          delete() { deleted = query; return chain; },
+          maybeSingle() { return Promise.resolve(result); },
           gt() { return chain; },
           order() { return chain; },
           insert(data) { inserted = data; return chain; },
@@ -31,14 +37,17 @@ mock.module('../lib/supabase.js', {
 });
 mock.module('../utils/queue.js', { namedExports: { whatsappQueue: { add: async (...args) => { queued.push(args); } } } });
 mock.module('../utils/whatsapp.js', { namedExports: { sendStaffCancellation: async () => {} } });
-const { publicCreateAppointment } = await import('../controllers/appointmentsController.js');
+const { publicCreateAppointment, updateStatus } = await import('../controllers/appointmentsController.js');
+const { encrypt } = await import('../utils/encryption.js');
 const { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } = await import('../lib/defaults.js');
 
 async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], staffError = null,
   customerId, customer = { id: customerId, name: 'Stored Name', phone: '+971500000001' }, customerError = null,
-  sessionCustomer = customerId ? { id: customerId } : undefined, openGuestBookings = 0, guest = {} } = {}) {
+  sessionCustomer = customerId ? { id: customerId } : undefined, openGuestBookings = 0,
+  postInsertCount = openGuestBookings + 1, guest = {} } = {}) {
   queries = [];
   inserted = undefined;
+  deleted = undefined;
   queued = [];
   responses = {
     services: [{ data: { price: 100, duration: 60, name_en: 'Cut' } }],
@@ -46,7 +55,7 @@ async function book({ staffId, staff = [{ id: 'stylist-a' }], bookings = [], sta
     staff: [{ data: staff, error: staffError }],
     appointments: [...(customerId ? [] : [{ count: openGuestBookings }]),
       { data: bookings.map(booking => ({ time_slot: '10:00:00', end_time: '11:00:00', ...booking })) },
-      { data: { id: 'appointment' } }]
+      { data: { id: 'appointment' } }, ...(customerId ? [] : [{ count: postInsertCount }])]
   };
   const res = {
     code: 200,
@@ -127,11 +136,19 @@ test('a phone with too many open guest bookings is rejected before inserting', a
 
 test('guest names and phones are length and character limited', async () => {
   for (const guest of [{ firstName: 'x'.repeat(51) }, { lastName: 'Visit evil.example/<a>' }, { firstName: '' },
-    { phone: undefined }, { phone: '12345' }, { phone: '+97150abc4567' }]) {
+    { phone: undefined }, { phone: '12345' }, { phone: '+97150abc4567' }, { phone: '971501234567' }]) {
     assert.equal((await book({ guest })).code, 400, JSON.stringify(guest));
     assert.equal(inserted, undefined);
   }
   assert.equal((await book({ guest: { firstName: 'Zoë', lastName: "O'Brien-Smith" } })).code, 201);
+  assert.equal((await book({ guest: { phone: '00971 50 123 4567' } })).code, 201);
+  assert.equal(inserted.guest.phone, '+971501234567');
+});
+
+test('concurrent bookings that push a phone past the cap are rolled back', async () => {
+  const res = await book({ openGuestBookings: 2, postInsertCount: 4 });
+  assert.equal(res.code, 429);
+  assert.ok(deleted.filters.some(filter => JSON.stringify(filter) === JSON.stringify(['id', 'appointment'])));
 });
 
 test('logged-in customer bookings confirm and message only the stored phone', async () => {
@@ -140,6 +157,44 @@ test('logged-in customer bookings confirm and message only the stored phone', as
   assert.equal(queued.length, 1);
   assert.equal(queued[0][1].phoneNumber, '+971500000001');
   assert.equal(queued[0][1].message.customerName, 'Stored Name');
+});
+
+test('encrypted customer phone and name are decrypted before queueing', async () => {
+  const customer = { id: 'customer-a', name: encrypt('Enc Name'), phone: encrypt('+971500000002') };
+  assert.equal((await book({ customerId: 'customer-a', customer })).code, 201);
+  assert.equal(queued[0][1].phoneNumber, '+971500000002');
+  assert.equal(queued[0][1].message.customerName, 'Enc Name');
+});
+
+async function confirm(updated, current) {
+  queries = [];
+  queued = [];
+  responses = { appointments: [{ data: updated }, { data: current }] };
+  const res = {
+    code: 200,
+    status(code) { this.code = code; return this; },
+    json(body) { this.body = body; return this; }
+  };
+  await updateStatus({ params: { id: 'appt' }, staff: { tenant_id: 't' }, body: { status: 'confirmed' } }, res);
+  return res;
+}
+
+test('staff confirming a pending guest booking queues one confirmation', async () => {
+  const row = { id: 'appt', status: 'confirmed', guest: { name: 'Ada', phone: '+971501234567' }, services: { name_en: 'Cut' } };
+  const res = await confirm(row);
+  assert.equal(res.code, 200);
+  assert.equal(queued.length, 1);
+  assert.equal(queued[0][1].phoneNumber, '+971501234567');
+  assert.ok(queries[0].filters.some(filter => JSON.stringify(filter) === JSON.stringify(['neq', 'status', 'confirmed'])));
+});
+
+test('re-confirming an already confirmed booking returns it without another message', async () => {
+  const current = { id: 'appt', status: 'confirmed', guest: { phone: '+971501234567' } };
+  const res = await confirm(null, current);
+  assert.equal(res.code, 200);
+  assert.deepEqual(res.body, current);
+  assert.equal(queued.length, 0);
+  assert.equal((await confirm(null, null)).code, 404);
 });
 
 test('a customer id is verified in the booking tenant before linking the appointment', async () => {

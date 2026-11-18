@@ -2,11 +2,23 @@ import { supabase } from '../lib/supabase.js';
 import { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } from '../lib/defaults.js';
 import { whatsappQueue } from '../utils/queue.js';
 import { sendStaffCancellation } from '../utils/whatsapp.js';
+import { decrypt } from '../utils/encryption.js';
 import { getEligibleStylists, getStylistBookings, findAvailableStylist } from '../utils/bookingAvailability.js';
 
 const NAME_RE = /^[\p{L}\p{M}' .-]{1,50}$/u;
-const PHONE_RE = /^\+?\d{8,15}$/;
+const PHONE_RE = /^\+\d{8,15}$/;
 export const MAX_OPEN_GUEST_BOOKINGS = 3;
+
+function countOpenGuestBookings(phone) {
+  return supabase
+    .from('appointments')
+    .select('id', { count: 'exact', head: true })
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('is_guest', true)
+    .eq('guest->>phone', phone)
+    .in('status', ['pending', 'confirmed'])
+    .gte('date', new Date().toISOString().slice(0, 10));
+}
 
 // Public endpoint — used by the frontend booking flow for both guests and logged-in customers
 export async function publicCreateAppointment(req, res) {
@@ -22,24 +34,19 @@ export async function publicCreateAppointment(req, res) {
   const isGuest = !customer_id;
   const firstName = String(req.body.firstName ?? '').trim();
   const lastName = String(req.body.lastName ?? '').trim();
-  const phone = String(req.body.phone ?? '').replace(/[\s().-]/g, '');
+  const phone = String(req.body.phone ?? '').replace(/[\s().-]/g, '').replace(/^00/, '+');
   if (isGuest) {
     if (!NAME_RE.test(firstName) || !NAME_RE.test(lastName)) {
       return res.status(400).json({ error: 'First and last name must be 1-50 letters' });
     }
-    if (!PHONE_RE.test(phone)) return res.status(400).json({ error: 'A valid phone number is required' });
+    if (!PHONE_RE.test(phone)) {
+      return res.status(400).json({ error: 'Phone number must include the country code, e.g. +971501234567' });
+    }
     if (email != null && (typeof email !== 'string' || email.length > 254)) {
       return res.status(400).json({ error: 'Invalid email' });
     }
 
-    const { count, error: openError } = await supabase
-      .from('appointments')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', DEFAULT_TENANT_ID)
-      .eq('is_guest', true)
-      .eq('guest->>phone', phone)
-      .in('status', ['pending', 'confirmed'])
-      .gte('date', new Date().toISOString().slice(0, 10));
+    const { count, error: openError } = await countOpenGuestBookings(phone);
     if (openError) return res.status(400).json({ error: openError.message });
     if (count >= MAX_OPEN_GUEST_BOOKINGS) {
       return res.status(429).json({ error: 'Too many open bookings for this phone number' });
@@ -109,6 +116,15 @@ export async function publicCreateAppointment(req, res) {
 
   if (error) return res.status(400).json({ error: error.message });
 
+  if (isGuest) {
+    // Re-check after insert so concurrent requests cannot all slip past the cap.
+    const { count } = await countOpenGuestBookings(phone);
+    if (count == null || count > MAX_OPEN_GUEST_BOOKINGS) {
+      await supabase.from('appointments').delete().eq('id', data.id).eq('tenant_id', DEFAULT_TENANT_ID);
+      return res.status(429).json({ error: 'Too many open bookings for this phone number' });
+    }
+  }
+
   if (customer?.phone) {
     queueConfirmation(customer.phone, customer.name, service.name_en, date, time_slot, total);
   }
@@ -116,11 +132,13 @@ export async function publicCreateAppointment(req, res) {
   res.status(201).json(data);
 }
 
-function queueConfirmation(phoneNumber, customerName, serviceName, date, timeSlot, totalAmount) {
+function queueConfirmation(storedPhone, storedName, serviceName, date, timeSlot, totalAmount) {
+  const phoneNumber = decrypt(storedPhone);
+  if (!phoneNumber) return;
   whatsappQueue.add('send_confirmation', {
     phoneNumber,
     message: {
-      customerName: customerName || 'Valued Guest',
+      customerName: decrypt(storedName) || 'Valued Guest',
       serviceName,
       staffName: 'our team',
       date,
@@ -204,14 +222,21 @@ export async function updateStatus(req, res) {
   const update = { status };
   if (status === 'cancelled' && cancellation_reason) update.cancellation_reason = cancellation_reason;
 
-  const { data, error } = await supabase
+  const select = '*, customers(name,phone), services(name_en), staff(name)';
+  let query = supabase
     .from('appointments')
     .update(update)
     .eq('id', req.params.id)
-    .eq('tenant_id', req.staff.tenant_id)
-    .select('*, customers(name,phone), services(name_en), staff(name)')
-    .single();
+    .eq('tenant_id', req.staff.tenant_id);
+  // Only a real transition to confirmed sends a message, so retries don't re-notify.
+  if (status === 'confirmed') query = query.neq('status', 'confirmed');
+  const { data, error } = await query.select(select).maybeSingle();
 
+  if (!error && !data && status === 'confirmed') {
+    const { data: current } = await supabase.from('appointments').select(select)
+      .eq('id', req.params.id).eq('tenant_id', req.staff.tenant_id).maybeSingle();
+    if (current) return res.json(current);
+  }
   if (error || !data) return res.status(404).json({ error: 'Appointment not found' });
 
   const phone = data.customers?.phone || data.guest?.phone;
