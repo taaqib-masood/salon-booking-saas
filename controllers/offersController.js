@@ -67,32 +67,38 @@ export async function deleteOffer(req, res) {
   res.json({ message: 'Deactivated' });
 }
 
-export async function validateOffer(req, res) {
-  const { code, amount, service_id } = req.body;
+export async function findValidOffer(tenant_id, code, amount, service_id) {
   const now = new Date().toISOString();
 
   const { data, error } = await supabase
     .from('offers')
     .select('*, offer_services(service_id)')
-    .eq('tenant_id', req.staff.tenant_id)
-    .eq('code', code.toUpperCase())
+    .eq('tenant_id', tenant_id)
+    .eq('code', String(code).toUpperCase())
     .eq('is_active', true)
     .lte('valid_from', now)
     .gte('valid_to', now)
     .single();
 
-  if (error || !data) return res.status(404).json({ error: 'Invalid or expired offer code' });
-  if (data.used_count >= data.max_uses) return res.status(400).json({ error: 'Offer usage limit reached' });
-  if (amount < data.min_order_amount) return res.status(400).json({ error: `Minimum order amount is ${data.min_order_amount} AED` });
+  if (error || !data) return { status: 404, error: 'Invalid or expired offer code' };
+  if (data.used_count >= data.max_uses) return { status: 400, error: 'Offer usage limit reached' };
+  if (amount < data.min_order_amount) return { status: 400, error: `Minimum order amount is ${data.min_order_amount} AED` };
 
   const applicableServices = data.offer_services.map(s => s.service_id);
   if (applicableServices.length && service_id && !applicableServices.includes(service_id)) {
-    return res.status(400).json({ error: 'Offer not valid for this service' });
+    return { status: 400, error: 'Offer not valid for this service' };
   }
 
   const discount = data.discount_type === 'percentage'
     ? (amount * data.discount_value) / 100
     : data.discount_value;
 
-  res.json({ valid: true, discount: Math.min(discount, amount), offer: data });
+  return { discount: Math.min(discount, amount), offer: data };
+}
+
+export async function validateOffer(req, res) {
+  const { code, amount, service_id } = req.body;
+  const result = await findValidOffer(req.staff.tenant_id, code, amount, service_id);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  res.json({ valid: true, discount: result.discount, offer: result.offer });
 }

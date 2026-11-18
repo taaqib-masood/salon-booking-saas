@@ -2,6 +2,8 @@ import { supabase } from '../lib/supabase.js';
 import { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } from '../lib/defaults.js';
 import { whatsappQueue } from '../utils/queue.js';
 import { sendStaffCancellation } from '../utils/whatsapp.js';
+import { calculateVAT } from '../utils/vatCalculator.js';
+import { findValidOffer } from './offersController.js';
 import { getEligibleStylists, getStylistBookings, findAvailableStylist } from '../utils/bookingAvailability.js';
 
 // Public endpoint — used by the frontend booking flow for both guests and logged-in customers
@@ -98,16 +100,54 @@ export async function publicCreateAppointment(req, res) {
   res.status(201).json(data);
 }
 
+const MANUAL_DISCOUNT_ROLES = ['owner', 'admin', 'manager'];
+
+async function findTenantRow(table, id, tenant_id, columns = 'id') {
+  if (!id) return null;
+  const { data, error } = await supabase.from(table).select(columns).eq('id', id).eq('tenant_id', tenant_id).single();
+  return error ? null : data;
+}
+
 export async function createAppointment(req, res) {
   const tenant_id = req.staff.tenant_id;
   const { branch_id, staff_id, service_id, customer_id, date, time_slot, end_time,
-    subtotal, vat_amount, total_amount, discount_amount, discount_ref,
-    payment_method, notes, is_guest, guest } = req.body;
+    discount_amount, discount_ref, payment_method, notes, is_guest, guest } = req.body;
+
+  const [branch, staff, service, customer] = await Promise.all([
+    findTenantRow('branches', branch_id, tenant_id),
+    findTenantRow('staff', staff_id, tenant_id),
+    findTenantRow('services', service_id, tenant_id, 'id, price'),
+    customer_id ? findTenantRow('customers', customer_id, tenant_id) : true,
+  ]);
+  if (!branch || !staff || !service || !customer) {
+    return res.status(400).json({ error: 'branch_id, staff_id, service_id and customer_id must belong to your tenant' });
+  }
+
+  const subtotal = Number(service.price) || 0;
+  let discount = 0;
+  if (discount_amount != null && discount_amount !== 0) {
+    if (!MANUAL_DISCOUNT_ROLES.includes(req.staff.role)) {
+      return res.status(403).json({ error: 'Only managers can apply manual discounts' });
+    }
+    discount = Number(discount_amount);
+    if (!Number.isFinite(discount) || discount < 0) return res.status(400).json({ error: 'Invalid discount_amount' });
+  } else if (discount_ref) {
+    const offer = await findValidOffer(tenant_id, discount_ref, subtotal, service_id);
+    if (offer.error) return res.status(400).json({ error: offer.error });
+    discount = offer.discount;
+  }
+  discount = +Math.min(discount, subtotal).toFixed(2);
+  // Service prices are VAT-exclusive, as in publicCreateAppointment and the services.price_with_vat column.
+  // Round in integer fils: float toFixed rounds ties like 2.545 down.
+  const netFils = Math.round((subtotal - discount) * 100);
+  const vatFils = Math.round(calculateVAT(netFils).vatAmount);
+  const vat_amount = vatFils / 100;
+  const total_amount = (netFils + vatFils) / 100;
 
   const { data, error } = await supabase
     .from('appointments')
     .insert({ tenant_id, branch_id, staff_id, service_id, customer_id, date,
-      time_slot, end_time, subtotal, vat_amount, total_amount, discount_amount,
+      time_slot, end_time, subtotal, vat_amount, total_amount, discount_amount: discount,
       discount_ref, payment_method, notes, is_guest, guest })
     .select('*, customers(name,phone), staff(name), services(name_en,price,duration), branches(name)')
     .single();
@@ -200,6 +240,9 @@ export async function updateStatus(req, res) {
 
 export async function rescheduleAppointment(req, res) {
   const { date, time_slot, end_time, staff_id } = req.body;
+  if (staff_id && !await findTenantRow('staff', staff_id, req.staff.tenant_id)) {
+    return res.status(400).json({ error: 'staff_id must belong to your tenant' });
+  }
 
   const { data, error } = await supabase
     .from('appointments')
