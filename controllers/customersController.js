@@ -4,8 +4,9 @@ import { decrypt } from '../utils/encryption.js';
 // ── Decrypt helpers ───────────────────────────────────────────────────────────
 function dec(row) {
   if (!row) return row;
+  const { password_hash, ...rest } = row;
   return {
-    ...row,
+    ...rest,
     name:  decrypt(row.name),
     phone: decrypt(row.phone),
     email: decrypt(row.email),
