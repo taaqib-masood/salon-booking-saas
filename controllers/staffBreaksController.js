@@ -1,5 +1,17 @@
 import { supabase } from '../lib/supabase.js';
 
+const isAdminRole = role => ['owner', 'admin', 'manager'].includes(role);
+
+async function staffInTenant(staffId, tenantId) {
+  const { data } = await supabase
+    .from('staff')
+    .select('id')
+    .eq('id', staffId)
+    .eq('tenant_id', tenantId)
+    .single();
+  return !!data;
+}
+
 // GET /api/v1/staff-breaks — returns breaks for the logged-in staff member
 export async function getMyBreaks(req, res) {
   const { data, error } = await supabase
@@ -13,6 +25,9 @@ export async function getMyBreaks(req, res) {
 
 // GET /api/v1/staff-breaks/:staff_id — admin view of any staff member's breaks
 export async function getBreaksByStaff(req, res) {
+  if (!await staffInTenant(req.params.staff_id, req.staff.tenant_id)) {
+    return res.status(404).json({ error: 'Staff not found' });
+  }
   const { data, error } = await supabase
     .from('staff_breaks')
     .select('*')
@@ -36,8 +51,10 @@ export async function createBreak(req, res) {
   }
 
   // Admins/owners/managers can create breaks for other staff by passing staff_id in body
-  const isAdmin = ['owner', 'admin', 'manager'].includes(req.staff.role);
-  const staff_id = (isAdmin && bodyStaffId) ? bodyStaffId : req.staff.id;
+  const staff_id = (isAdminRole(req.staff.role) && bodyStaffId) ? bodyStaffId : req.staff.id;
+  if (staff_id !== req.staff.id && !await staffInTenant(staff_id, req.staff.tenant_id)) {
+    return res.status(404).json({ error: 'Staff not found' });
+  }
 
   const { data, error } = await supabase
     .from('staff_breaks')
@@ -50,11 +67,17 @@ export async function createBreak(req, res) {
 
 // DELETE /api/v1/staff-breaks/:id
 export async function deleteBreak(req, res) {
-  const isAdmin = ['owner', 'admin', 'manager'].includes(req.staff.role);
-  let query = supabase.from('staff_breaks').delete().eq('id', req.params.id);
   // Staff can only delete own; admins can delete any within tenant
-  if (!isAdmin) query = query.eq('staff_id', req.staff.id);
-  const { error } = await query;
+  let lookup = supabase
+    .from('staff_breaks')
+    .select('id, staff!inner(tenant_id)')
+    .eq('id', req.params.id)
+    .eq('staff.tenant_id', req.staff.tenant_id);
+  if (!isAdminRole(req.staff.role)) lookup = lookup.eq('staff_id', req.staff.id);
+  const { data: existing } = await lookup.single();
+  if (!existing) return res.status(404).json({ error: 'Break not found' });
+
+  const { error } = await supabase.from('staff_breaks').delete().eq('id', existing.id);
   if (error) return res.status(400).json({ error: error.message });
   res.json({ message: 'Deleted' });
 }
