@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase.js';
 import { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } from '../lib/defaults.js';
 import { whatsappQueue } from '../utils/queue.js';
 import { sendStaffCancellation } from '../utils/whatsapp.js';
+import { calculateVAT } from '../utils/vatCalculator.js';
 import { findValidOffer } from './offersController.js';
 import { getEligibleStylists, getStylistBookings, findAvailableStylist } from '../utils/bookingAvailability.js';
 
@@ -136,8 +137,10 @@ export async function createAppointment(req, res) {
     discount = offer.discount;
   }
   discount = +Math.min(discount, subtotal).toFixed(2);
-  const vat_amount = +((subtotal - discount) * 0.05).toFixed(2);
-  const total_amount = +(subtotal - discount + vat_amount).toFixed(2);
+  // Service prices are VAT-exclusive, as in publicCreateAppointment and the services.price_with_vat column.
+  const { vatAmount, totalAmount } = calculateVAT(subtotal - discount);
+  const vat_amount = +vatAmount.toFixed(2);
+  const total_amount = +totalAmount.toFixed(2);
 
   const { data, error } = await supabase
     .from('appointments')

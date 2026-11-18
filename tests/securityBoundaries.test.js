@@ -11,13 +11,16 @@ mock.module('../lib/supabase.js', { namedExports: { supabase: {
     const query = { table, filters: {}, write: false };
     queries.push(query);
     const result = () => {
-      const foreign = String(query.filters.id).startsWith('foreign');
-      if (table === 'staff') return staffRoles[query.filters.id] && !foreign
-        ? { data: { id: query.filters.id, tenant_id: 'tenant-a', role: staffRoles[query.filters.id] } }
+      // Rows whose id starts with 'foreign' exist in tenant-b; only the tenant_id filter hides them.
+      const rowTenant = String(query.filters.id).startsWith('foreign') ? 'tenant-b' : 'tenant-a';
+      const visible = !query.filters.tenant_id || query.filters.tenant_id === rowTenant;
+      const role = staffRoles[query.filters.id] || (rowTenant === 'tenant-b' && 'stylist');
+      if (table === 'staff') return role && visible
+        ? { data: { id: query.filters.id, tenant_id: rowTenant, role } }
         : { data: null, error: { message: 'not found' } };
-      if (['customers', 'branches', 'services'].includes(table)) return foreign
-        ? { data: null, error: { message: 'not found' } }
-        : { data: { id: query.filters.id, tenant_id: 'tenant-a', price: 100 } };
+      if (['customers', 'branches', 'services'].includes(table)) return visible
+        ? { data: { id: query.filters.id, tenant_id: rowTenant, price: 100 } }
+        : { data: null, error: { message: 'not found' } };
       if (table === 'offers') return query.filters.code === 'SAVE10'
         ? { data: { discount_type: 'percentage', discount_value: 10, used_count: 0, max_uses: 5, min_order_amount: 0, offer_services: [] } }
         : { data: null, error: { message: 'not found' } };
