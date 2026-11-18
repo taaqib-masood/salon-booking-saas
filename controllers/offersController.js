@@ -1,5 +1,21 @@
 import { supabase } from '../lib/supabase.js';
 
+const EDITABLE_FIELDS = ['name', 'code', 'discount_type', 'discount_value', 'min_order_amount',
+  'max_uses', 'valid_from', 'valid_to', 'is_active'];
+
+const pickEditable = body => Object.fromEntries(
+  EDITABLE_FIELDS.filter(key => body[key] !== undefined).map(key => [key, body[key]])
+);
+
+async function servicesBelongToTenant(serviceIds, tenantId) {
+  if (!Array.isArray(serviceIds)) return false;
+  if (!serviceIds.length) return true;
+  const ids = [...new Set(serviceIds)];
+  const { data, error } = await supabase
+    .from('services').select('id').eq('tenant_id', tenantId).in('id', ids);
+  return !error && data?.length === ids.length;
+}
+
 export async function getOffers(req, res) {
   const { data, error } = await supabase
     .from('offers')
@@ -12,11 +28,14 @@ export async function getOffers(req, res) {
 }
 
 export async function createOffer(req, res) {
-  const { applicable_services = [], ...fields } = req.body;
+  const { applicable_services = [] } = req.body;
+  if (!await servicesBelongToTenant(applicable_services, req.staff.tenant_id)) {
+    return res.status(400).json({ error: 'Invalid applicable_services' });
+  }
 
   const { data, error } = await supabase
     .from('offers')
-    .insert({ ...fields, tenant_id: req.staff.tenant_id })
+    .insert({ ...pickEditable(req.body), tenant_id: req.staff.tenant_id })
     .select()
     .single();
 
@@ -32,11 +51,14 @@ export async function createOffer(req, res) {
 }
 
 export async function updateOffer(req, res) {
-  const { applicable_services, ...fields } = req.body;
+  const { applicable_services } = req.body;
+  if (applicable_services !== undefined && !await servicesBelongToTenant(applicable_services, req.staff.tenant_id)) {
+    return res.status(400).json({ error: 'Invalid applicable_services' });
+  }
 
   const { data, error } = await supabase
     .from('offers')
-    .update(fields)
+    .update(pickEditable(req.body))
     .eq('id', req.params.id)
     .eq('tenant_id', req.staff.tenant_id)
     .select()
