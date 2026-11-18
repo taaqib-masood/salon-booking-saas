@@ -17,8 +17,8 @@ export const httpLogger = morgan(
   (tokens, req, res) => {
     const status = tokens.status(req, res);
     const ms     = tokens['response-time'](req, res);
-    // Mask any phone-like query params
-    const url    = (tokens.url(req, res) || '').replace(/phone=[^&]+/, 'phone=****');
+    // Mask phone-like and secret token query params (e.g. calendar feed token)
+    const url    = (tokens.url(req, res) || '').replace(/phone=[^&]+/, 'phone=****').replace(/([?&]token=)[^&]+/g, '$1****');
     return JSON.stringify({
       type:       'http',
       requestId:  req.requestId,

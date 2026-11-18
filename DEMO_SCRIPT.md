@@ -69,9 +69,9 @@
 **Say:**
 > "Every staff member has their own profile — specialties, commission rate, working days. The system tracks who does what."
 
-**Do:** Open browser and go to:
+**Do:** In the Admin Dashboard, click **+ New iCal Feed URL** (admin only), then open the copied URL:
 ```
-http://localhost:3000/api/v1/calendar/feed.ics?tenant_id=5103813d-5a3b-4ebd-88f3-d1277e600a06
+http://localhost:3000/api/v1/calendar/feed.ics?token=<feed token>
 ```
 
 **Say:**

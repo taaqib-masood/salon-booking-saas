@@ -24,6 +24,8 @@
   "appointmentsByStatus": "المواعيد حسب الحالة",
   "schedule": "الجدول",
   "copyIcalFeed": "+ نسخ رابط iCal",
+  "generateIcalFeed": "+ رابط iCal جديد",
+  "generateIcalFeedHint": "ينشئ رابط تقويم خاصًا ويعطّل أي رابط سابق",
   "copied": "✓ تم النسخ!",
   "openInGoogleCal": "افتح في تقويم Google →",
   "brandCustomizer": "تخصيص العلامة التجارية",

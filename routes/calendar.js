@@ -1,5 +1,7 @@
 import express from 'express';
+import crypto from 'crypto';
 import { supabase } from '../lib/supabase.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -10,6 +12,24 @@ function toICalLocalDate(dateStr, timeStr) {
   const [h, m] = timeStr.split(':');
   return `${y}${mo}${d}T${h.padStart(2,'0')}${m.padStart(2,'0')}00`;
 }
+
+const hashFeedToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+/**
+ * POST /api/v1/calendar/feed-token
+ *
+ * Admin-only. Creates (or rotates) the tenant's secret feed token. Only the hash is stored,
+ * so the token is returned once; rotating invalidates every previously issued feed URL.
+ */
+router.post('/feed-token', authenticate, authorize('admin'), async (req, res) => {
+  const token = crypto.randomBytes(32).toString('base64url');
+  const { error } = await supabase
+    .from('tenants')
+    .update({ calendar_feed_token_hash: hashFeedToken(token) })
+    .eq('id', req.staff.tenant_id);
+  if (error) return res.status(500).json({ error: 'Could not create feed token' });
+  res.status(201).json({ token });
+});
 
 function toICalDate(date) {
   return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -22,14 +42,18 @@ function toICalDate(date) {
  * Salon staff can subscribe to this URL in Google Calendar for auto-sync.
  * 
  * Usage: Paste this URL into Google Calendar → "Other Calendars" → "From URL"
- * URL: http://localhost:3000/api/v1/calendar/feed.ics?tenant_id=YOUR_TENANT_ID
+ * URL: http://localhost:3000/api/v1/calendar/feed.ics?token=FEED_TOKEN (from POST /feed-token)
  */
 router.get('/feed.ics', async (req, res) => {
-  const { tenant_id } = req.query;
+  const { token } = req.query;
+  if (typeof token !== 'string' || !token) return res.status(401).send('Missing feed token');
 
-  if (!tenant_id) {
-    return res.status(400).send('Missing required query param: tenant_id');
-  }
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('calendar_feed_token_hash', hashFeedToken(token))
+    .maybeSingle();
+  if (!tenant) return res.status(404).send('Feed not found');
 
   // Fetch the next 30 days of confirmed appointments
   const today = new Date();
@@ -39,14 +63,14 @@ router.get('/feed.ics', async (req, res) => {
   const { data: appointments, error } = await supabase
     .from('appointments')
     .select('id, date, time_slot, end_time, status, customers(name, phone), staff(name), services(name_en, duration)')
-    .eq('tenant_id', tenant_id)
+    .eq('tenant_id', tenant.id)
     .in('status', ['confirmed', 'pending'])
     .gte('date', today.toISOString().split('T')[0])
     .lte('date', in30Days.toISOString().split('T')[0])
     .order('date', { ascending: true })
     .order('time_slot', { ascending: true });
 
-  if (error) return res.status(500).send(`Error fetching appointments: ${error.message}`);
+  if (error) return res.status(500).send('Error fetching appointments');
 
   // Build iCal events
   const now = toICalDate(new Date());

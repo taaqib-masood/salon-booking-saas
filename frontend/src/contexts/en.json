@@ -24,6 +24,8 @@
   "appointmentsByStatus": "Appointments by Status",
   "schedule": "Schedule",
   "copyIcalFeed": "+ Copy iCal Feed URL",
+  "generateIcalFeed": "+ New iCal Feed URL",
+  "generateIcalFeedHint": "Creates a private feed URL and disables any previous one",
   "copied": "✓ Copied!",
   "openInGoogleCal": "Open in Google Cal →",
   "brandCustomizer": "Brand Customizer",
