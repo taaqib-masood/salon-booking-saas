@@ -35,6 +35,9 @@ const seedData = async () => {
         if (tenantInsertErr) throw tenantInsertErr;
     }
 
+    // The seed creates two branches; the default free-plan limit is one.
+    await supabase.from('tenants').update({ branch_limit: 2 }).eq('id', tenant_id);
+
     console.log('🧹 Purging existing luxury data...');
     await supabase.from('services').delete().eq('tenant_id', tenant_id);
     await supabase.from('service_categories').delete().eq('tenant_id', tenant_id);
