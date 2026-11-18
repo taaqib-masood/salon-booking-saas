@@ -185,7 +185,18 @@ const tools = [
 ];
 
 // ── Webhook ───────────────────────────────────────────────────────────────────
-router.post('/whatsapp', async (req, res) => {
+// Reject anything not signed by Twilio; req.protocol honours X-Forwarded-Proto via app 'trust proxy'.
+function requireTwilioSignature(req, res, next) {
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const signature = req.get('X-Twilio-Signature');
+  const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+  if (!token || !signature || !twilio.validateRequest(token, signature, url, req.body || {})) {
+    return res.status(403).type('text/plain').send('Forbidden');
+  }
+  next();
+}
+
+router.post('/whatsapp', requireTwilioSignature, async (req, res) => {
   const incomingMsg  = req.body.Body || '';
   const fromNumber   = req.body.From || '';
   const customerPhone = fromNumber.replace('whatsapp:', '');
