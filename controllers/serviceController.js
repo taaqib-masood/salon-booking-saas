@@ -56,9 +56,45 @@ export async function getServiceById(req, res) {
   res.json(data);
 }
 
+const SERVICE_FIELDS = ['category_id', 'name_en', 'name_ar', 'description_en', 'description_ar',
+  'duration', 'price', 'vat_inclusive', 'is_active'];
+const MAX_DURATION_MINUTES = 600;
+
+async function parseServiceInput(body, tenant_id, creating) {
+  const fields = Object.fromEntries(SERVICE_FIELDS.filter(key => body[key] !== undefined).map(key => [key, body[key]]));
+  if (creating || fields.duration !== undefined) {
+    const duration = Number(fields.duration);
+    if (!Number.isInteger(duration) || duration < 1 || duration > MAX_DURATION_MINUTES) {
+      return { error: `duration must be a whole number of minutes from 1 to ${MAX_DURATION_MINUTES}` };
+    }
+    fields.duration = duration;
+  }
+
+  let { branches } = body;
+  if (branches !== undefined) {
+    if (!Array.isArray(branches) || branches.some(id => typeof id !== 'string')) {
+      return { error: 'branches must be an array of branch IDs' };
+    }
+    branches = [...new Set(branches)];
+  }
+
+  if (fields.category_id) {
+    const { data } = await supabase.from('service_categories').select('id')
+      .eq('id', fields.category_id).eq('tenant_id', tenant_id).single();
+    if (!data) return { error: 'Category not found' };
+  }
+  if (branches?.length) {
+    const { data, error } = await supabase.from('branches').select('id')
+      .in('id', branches).eq('tenant_id', tenant_id);
+    if (error || (data || []).length !== branches.length) return { error: 'Branch not found' };
+  }
+  return { fields, branches };
+}
+
 export async function createService(req, res) {
   const tenant_id = req.staff.tenant_id;
-  const { branches = [], ...fields } = req.body;
+  const { fields, branches = [], error: inputError } = await parseServiceInput(req.body, tenant_id, true);
+  if (inputError) return res.status(400).json({ error: inputError });
 
   const { data, error } = await supabase
     .from('services')
@@ -78,7 +114,8 @@ export async function createService(req, res) {
 }
 
 export async function updateService(req, res) {
-  const { branches, ...fields } = req.body;
+  const { fields, branches, error: inputError } = await parseServiceInput(req.body, req.staff.tenant_id, false);
+  if (inputError) return res.status(400).json({ error: inputError });
 
   const { data, error } = await supabase
     .from('services')
