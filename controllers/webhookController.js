@@ -49,8 +49,9 @@ export async function deleteWebhook(req, res) {
 export async function getWebhookDeliveries(req, res) {
   const { data, error } = await supabase
     .from('webhook_deliveries')
-    .select('*, webhooks(url,event)')
-    .eq('webhooks.tenant_id', req.staff.tenant_id)
+    .select('*, webhooks(url,events)')
+    .eq('tenant_id', req.staff.tenant_id)
+    .eq('webhook_id', req.params.id)
     .order('created_at', { ascending: false })
     .limit(100);
 
