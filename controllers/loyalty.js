@@ -30,30 +30,22 @@ export async function getTransactions(req, res) {
   res.json(data);
 }
 
+const MAX_REDEEM_POINTS = 1_000_000;
+
 export async function redeemPoints(req, res) {
   const { customer_id, points, description } = req.body;
   const tenant_id = req.staff.tenant_id;
 
-  const { data: customer, error: fetchErr } = await supabase
-    .from('customers')
-    .select('loyalty_points')
-    .eq('id', customer_id)
-    .eq('tenant_id', tenant_id)
-    .single();
+  if (!Number.isInteger(points) || points <= 0 || points > MAX_REDEEM_POINTS) {
+    return res.status(400).json({ error: 'points must be a positive integer' });
+  }
 
-  if (fetchErr || !customer) return res.status(404).json({ error: 'Customer not found' });
-  if (customer.loyalty_points < points) return res.status(400).json({ error: 'Insufficient points' });
+  const { data: newBalance, error } = await supabase.rpc('redeem_loyalty_points', {
+    p_tenant_id: tenant_id, p_customer_id: customer_id, p_points: points,
+    p_description: description || 'Points redeemed',
+  });
 
-  const newBalance = customer.loyalty_points - points;
-
-  const [updateRes, txnRes] = await Promise.all([
-    supabase.from('customers').update({ loyalty_points: newBalance }).eq('id', customer_id),
-    supabase.from('loyalty_transactions').insert({
-      tenant_id, customer_id, points: -points, type: 'redeem',
-      description: description || 'Points redeemed', balance: newBalance,
-    }),
-  ]);
-
-  if (updateRes.error) return res.status(400).json({ error: updateRes.error.message });
+  if (error) return res.status(400).json({ error: error.message });
+  if (newBalance === null) return res.status(400).json({ error: 'Customer not found or insufficient points' });
   res.json({ message: 'Redeemed', new_balance: newBalance });
 }
