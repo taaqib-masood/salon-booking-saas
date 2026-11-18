@@ -29,10 +29,10 @@ const { getAvailableSlots } = await import('../controllers/availabilityControlle
 const { DEFAULT_TENANT_ID, DEFAULT_BRANCH_ID } = await import('../lib/defaults.js');
 
 async function slots({ staffId, staff = [{ id: 'a' }, { id: 'b' }], bookings = [],
-  staffError = null, bookingsError = null, breaks = [], serviceError = null } = {}) {
+  staffError = null, bookingsError = null, breaks = [], serviceError = null, duration = 60 } = {}) {
   queries = [];
   responses = {
-    services: { data: { duration: 60, name_en: 'Cut', tenant_id: DEFAULT_TENANT_ID }, error: serviceError },
+    services: { data: { duration, name_en: 'Cut', tenant_id: DEFAULT_TENANT_ID }, error: serviceError },
     tenants: { data: { settings: { workingHours: { 0: { open: true, start: '09:00', end: '12:00' } } } } },
     staff: { data: staff, error: staffError },
     appointments: { data: bookings, error: bookingsError },
@@ -114,4 +114,12 @@ test('chosen stylist breaks still block overlapping slots', async () => {
   const res = await slots({ staffId: 'a', staff: [{ id: 'a' }],
     breaks: [{ start_time: '10:00:00', end_time: '11:00:00' }] });
   assert.deepEqual(res.body.slots, ['09:00', '11:00']);
+});
+
+test('non-positive or non-integer service durations return no slots instead of looping', async () => {
+  for (const duration of [-1, -60, 0.5, 'abc']) {
+    const res = await slots({ duration });
+    assert.equal(res.code, 200);
+    assert.deepEqual(res.body.slots, []);
+  }
 });

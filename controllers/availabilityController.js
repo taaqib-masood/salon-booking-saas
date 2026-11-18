@@ -48,6 +48,9 @@ export async function getAvailableSlots(req, res) {
   }
 
   const duration = service.duration || 60;
+  if (!Number.isInteger(duration) || duration < 1) {
+    return res.json({ date, duration, service: service.name_en, slots: [] });
+  }
 
   const { data: staff, error: staffError } = await getEligibleStylists(staff_id);
   if (staffError) return res.status(400).json({ error: staffError.message });
@@ -74,7 +77,8 @@ export async function getAvailableSlots(req, res) {
 
   // Generate slots
   const slots = [];
-  for (let start = openMin; start + duration <= closeMin; start += duration) {
+  const MAX_SLOTS = 1440; // one per minute of a day
+  for (let start = openMin, i = 0; start + duration <= closeMin && i < MAX_SLOTS; start += duration, i++) {
     const end = start + duration;
     const availableStaff = findAvailableStylist(staff, bookings, toTimeStr(start), toTimeStr(end));
     const breakConflict = breakRanges.some(b => start < b.end && end > b.start);
