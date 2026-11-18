@@ -11,6 +11,9 @@ export async function publicCreateAppointment(req, res) {
   if (!service_id || !date || !time_slot) {
     return res.status(400).json({ error: 'service_id, date, and time_slot are required' });
   }
+  if (customer_id && req.customer?.id !== customer_id) {
+    return res.status(403).json({ error: 'Cannot book for another customer' });
+  }
 
   // Fetch service for pricing
   const { data: service, error: svcErr } = await supabase

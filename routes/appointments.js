@@ -7,7 +7,8 @@ import { authenticate, authenticateCustomer } from '../middleware/auth.js';
 import notesRouter from './appointmentNotes.js';
 
 // Public: customer-facing booking (no staff auth required)
-router.post('/book', publicCreateAppointment);
+router.post('/book', (req, res, next) => req.body.customer_id
+  ? authenticateCustomer(req, res, next) : next(), publicCreateAppointment);
 
 // Customer-facing: own appointments (must be before /:id)
 router.get('/my', authenticateCustomer, getMyAppointments);
