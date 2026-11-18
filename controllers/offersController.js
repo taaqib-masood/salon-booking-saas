@@ -69,6 +69,7 @@ export async function deleteOffer(req, res) {
 
 export async function validateOffer(req, res) {
   const { code, amount, service_id } = req.body;
+  if (typeof code !== 'string' || !code) return res.status(400).json({ error: 'Offer code required' });
   const now = new Date().toISOString();
 
   const { data, error } = await supabase

@@ -43,7 +43,6 @@ async function start() {
   // ── Process error handlers ──────────────────────────────────────────────────
   process.on('unhandledRejection', (err) => {
     logger.error('[Server] Unhandled Rejection', { error: err?.message, stack: err?.stack });
-    if (process.env.NODE_ENV === 'production') server.close(() => process.exit(1));
   });
 
   process.on('uncaughtException', (err) => {
