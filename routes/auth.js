@@ -6,6 +6,9 @@ import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
+// Compared against when no account matches so response time doesn't reveal which emails exist.
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('no-such-account', 10);
+const normalizeEmail = (email) => String(email).trim().toLowerCase();
 
 // Staff login
 router.post('/staff/login', async (req, res) => {
@@ -15,14 +18,12 @@ router.post('/staff/login', async (req, res) => {
   const { data: staff, error } = await supabase
     .from('staff')
     .select('id, name, email, role, tenant_id, branch_id, password_hash, is_deleted')
-    .eq('email', email.toLowerCase())
+    .eq('email', normalizeEmail(email))
     .eq('is_deleted', false)
     .single();
 
-  if (error || !staff) return res.status(401).json({ error: 'Invalid credentials' });
-
-  const valid = await bcrypt.compare(password, staff.password_hash);
-  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+  const valid = await bcrypt.compare(password, staff?.password_hash || DUMMY_PASSWORD_HASH);
+  if (error || !staff || !valid) return res.status(401).json({ error: 'Invalid credentials' });
 
   const token = jwt.sign(
     { id: staff.id, tenant_id: staff.tenant_id, role: staff.role },
@@ -38,10 +39,20 @@ router.post('/staff/login', async (req, res) => {
 
 // Tenant register (creates tenant + owner staff account)
 router.post('/register', async (req, res) => {
-  const { business_name, email, password, name, phone } = req.body;
-  if (!business_name || !email || !password || !name) {
+  const { business_name, password, name, phone } = req.body;
+  if (!business_name || !req.body.email || !password || !name) {
     return res.status(400).json({ error: 'business_name, email, password, name required' });
   }
+  const email = normalizeEmail(req.body.email);
+  const STAFF_EMAIL_TAKEN = { error: 'An account with this email already exists' };
+
+  const { data: existing } = await supabase
+    .from('staff')
+    .select('id')
+    .eq('email', email)
+    .eq('is_deleted', false)
+    .maybeSingle();
+  if (existing) return res.status(409).json(STAFF_EMAIL_TAKEN);
 
   const slug = business_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36);
 
@@ -64,11 +75,15 @@ router.post('/register', async (req, res) => {
 
   const { data: staff, error: staffErr } = await supabase
     .from('staff')
-    .insert({ tenant_id: tenant.id, name, email: email.toLowerCase(), password_hash, role: 'admin' })
+    .insert({ tenant_id: tenant.id, name, email, password_hash, role: 'admin' })
     .select('id, name, email, role, tenant_id')
     .single();
 
-  if (staffErr) return res.status(400).json({ error: staffErr.message });
+  if (staffErr) {
+    await supabase.from('tenants').delete().eq('id', tenant.id);
+    if (staffErr.code === '23505') return res.status(409).json(STAFF_EMAIL_TAKEN);
+    return res.status(400).json({ error: staffErr.message });
+  }
 
   const token = jwt.sign(
     { id: staff.id, tenant_id: staff.tenant_id, role: staff.role },

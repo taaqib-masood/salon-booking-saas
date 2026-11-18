@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { supabase } from '../lib/supabase.js';
 
+const normalizeEmail = (email) => String(email).trim().toLowerCase();
+
 // GET /api/v1/staff/public?tenant_id=xxx  — public-facing staff directory
 export async function getPublicStaff(req, res) {
   const tenant_id = req.query.tenant_id || req.headers['x-tenant-id'];
@@ -51,6 +53,7 @@ export async function getStaffById(req, res) {
 export async function createStaff(req, res) {
   const { password, ...fields } = req.body;
   if (!password) return res.status(400).json({ error: 'Password is required' });
+  if (fields.email) fields.email = normalizeEmail(fields.email);
   const password_hash = await bcrypt.hash(password, 10);
 
   const { data, error } = await supabase
@@ -69,6 +72,7 @@ export async function createStaff(req, res) {
 export async function updateStaff(req, res) {
   const { password, password_hash, tenant_id, ...fields } = req.body;
   if (password) fields.password_hash = await bcrypt.hash(password, 10);
+  if (fields.email) fields.email = normalizeEmail(fields.email);
 
   const { data, error } = await supabase
     .from('staff')
@@ -78,6 +82,7 @@ export async function updateStaff(req, res) {
     .select('id,name,email,role,is_active')
     .single();
 
+  if (error?.code === '23505') return res.status(400).json({ error: 'A staff member with this email already exists' });
   if (error || !data) return res.status(404).json({ error: 'Staff not found' });
   res.json(data);
 }
