@@ -11,20 +11,36 @@ export async function getPackages(req, res) {
   res.json(data);
 }
 
+const PACKAGE_FIELDS = ['name', 'description', 'total_sessions', 'price', 'validity_days', 'is_active'];
+const pickPackageFields = (body = {}) =>
+  Object.fromEntries(PACKAGE_FIELDS.filter(key => Object.hasOwn(body, key)).map(key => [key, body[key]]));
+
 export async function createPackage(req, res) {
-  const { services = [], ...fields } = req.body;
+  const tenant_id = req.staff.tenant_id;
+  const { services = [] } = req.body ?? {};
+  if (!Array.isArray(services)) return res.status(400).json({ error: 'services must be an array' });
+  const serviceIds = [...new Set(services)];
+
+  if (serviceIds.length) {
+    const { data: owned, error } = await supabase
+      .from('services')
+      .select('id')
+      .eq('tenant_id', tenant_id)
+      .in('id', serviceIds);
+    if (error || owned?.length !== serviceIds.length) return res.status(400).json({ error: 'Invalid services' });
+  }
 
   const { data, error } = await supabase
     .from('packages')
-    .insert({ ...fields, tenant_id: req.staff.tenant_id })
+    .insert({ ...pickPackageFields(req.body), tenant_id })
     .select()
     .single();
 
   if (error) return res.status(400).json({ error: error.message });
 
-  if (services.length) {
+  if (serviceIds.length) {
     await supabase.from('package_services').insert(
-      services.map(service_id => ({ package_id: data.id, service_id }))
+      serviceIds.map(service_id => ({ package_id: data.id, service_id }))
     );
   }
 
@@ -32,7 +48,9 @@ export async function createPackage(req, res) {
 }
 
 export async function updatePackage(req, res) {
-  const { services, ...fields } = req.body;
+  const fields = pickPackageFields(req.body);
+  if (!Object.keys(fields).length) return res.status(400).json({ error: 'No updatable fields' });
+
   const { data, error } = await supabase
     .from('packages')
     .update(fields)
