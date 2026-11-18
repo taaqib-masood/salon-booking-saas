@@ -8,8 +8,8 @@ import { getEligibleStylists, getStylistBookings, findAvailableStylist } from '.
 export async function publicCreateAppointment(req, res) {
   const { service_id, staff_id, date, time_slot, customer_id, firstName, lastName, phone, email } = req.body;
 
-  if (!service_id || !date || !time_slot) {
-    return res.status(400).json({ error: 'service_id, date, and time_slot are required' });
+  if (!service_id || typeof date !== 'string' || typeof time_slot !== 'string' || !/^\d{2}:\d{2}/.test(time_slot)) {
+    return res.status(400).json({ error: 'service_id, date, and time_slot (HH:MM) are required' });
   }
   if (customer_id && req.customer?.id !== customer_id) {
     return res.status(403).json({ error: 'Cannot book for another customer' });

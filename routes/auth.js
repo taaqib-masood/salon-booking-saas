@@ -6,11 +6,12 @@ import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
+const allStrings = (...values) => values.every(v => typeof v === 'string');
 
 // Staff login
 router.post('/staff/login', async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  if (!email || !password || !allStrings(email, password)) return res.status(400).json({ error: 'Email and password required' });
 
   const { data: staff, error } = await supabase
     .from('staff')
@@ -39,7 +40,7 @@ router.post('/staff/login', async (req, res) => {
 // Tenant register (creates tenant + owner staff account)
 router.post('/register', async (req, res) => {
   const { business_name, email, password, name, phone } = req.body;
-  if (!business_name || !email || !password || !name) {
+  if (!business_name || !email || !password || !name || !allStrings(business_name, email, password, name, phone ?? '')) {
     return res.status(400).json({ error: 'business_name, email, password, name required' });
   }
 
@@ -82,7 +83,7 @@ router.post('/register', async (req, res) => {
 // Customer register (self-service)
 router.post('/customer/register', async (req, res) => {
   const { name, phone, email, password } = req.body;
-  if (!name || !phone || !email || !password) {
+  if (!name || !phone || !email || !password || !allStrings(name, phone, email, password)) {
     return res.status(400).json({ error: 'name, phone, email, and password are required' });
   }
 
@@ -111,7 +112,7 @@ router.post('/customer/register', async (req, res) => {
 // Customer login by phone
 router.post('/customer/login', async (req, res) => {
   const { phone, password } = req.body;
-  if (!phone || !password) return res.status(400).json({ error: 'Phone and password required' });
+  if (!phone || !password || !allStrings(phone, password)) return res.status(400).json({ error: 'Phone and password required' });
 
   const { data: customer, error } = await supabase
     .from('customers')

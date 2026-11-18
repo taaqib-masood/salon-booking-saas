@@ -1,4 +1,5 @@
 import express from 'express';
+import './lib/asyncErrors.js';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 
 // Error handler
 app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
   const status = err.status || 500;
   if (status >= 500) {
     logger.error('Unhandled error', {
