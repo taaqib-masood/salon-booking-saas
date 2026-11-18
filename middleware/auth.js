@@ -14,15 +14,18 @@ async function resolveToken(req) {
 export const authenticate = async (req, res, next) => {
   try {
     const decoded = await resolveToken(req);
+    if (decoded.type !== 'staff') throw new Error('Not a staff token');
 
     const { data: staff, error } = await supabase
       .from('staff')
       .select('id, name, email, role, tenant_id, branch_id, is_deleted')
       .eq('id', decoded.id)
       .eq('is_deleted', false)
+      .eq('is_active', true)
       .single();
 
     if (error || !staff) throw new Error('Staff not found');
+    if (staff.tenant_id !== decoded.tenant_id) throw new Error('Tenant mismatch');
     req.staff = staff;
     next();
   } catch {

@@ -52,8 +52,12 @@ export async function getAppointmentsByCustomerId(req, res) {
   res.json(data);
 }
 
+const EDITABLE_CUSTOMER_FIELDS = ['name', 'phone', 'email', 'preferred_language', 'preferred_stylist', 'notes'];
+
 export async function updateCustomerProfile(req, res) {
-  const { password_hash, tenant_id, ...fields } = req.body;
+  const fields = Object.fromEntries(Object.entries(req.body || {})
+    .filter(([key]) => EDITABLE_CUSTOMER_FIELDS.includes(key)));
+  if (!Object.keys(fields).length) return res.status(400).json({ error: 'No editable fields provided' });
 
   const { data, error } = await supabase
     .from('customers')
