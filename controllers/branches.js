@@ -1,5 +1,10 @@
 import { supabase } from '../lib/supabase.js';
 
+const EDITABLE_FIELDS = ['name', 'phone', 'email', 'address', 'working_hours', 'holidays'];
+const editableFields = body => Object.fromEntries(
+  EDITABLE_FIELDS.filter(key => body?.[key] !== undefined).map(key => [key, body[key]])
+);
+
 export async function getBranches(req, res) {
   const { data, error } = await supabase
     .from('branches')
@@ -28,7 +33,7 @@ export async function getBranchById(req, res) {
 export async function createBranch(req, res) {
   const { data, error } = await supabase
     .from('branches')
-    .insert({ ...req.body, tenant_id: req.staff.tenant_id })
+    .insert({ ...editableFields(req.body), tenant_id: req.staff.tenant_id })
     .select()
     .single();
 
@@ -37,7 +42,8 @@ export async function createBranch(req, res) {
 }
 
 export async function updateBranch(req, res) {
-  const { tenant_id, ...fields } = req.body;
+  const fields = editableFields(req.body);
+  if (!Object.keys(fields).length) return res.status(400).json({ error: 'No editable fields provided' });
   const { data, error } = await supabase
     .from('branches')
     .update(fields)
